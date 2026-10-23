@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import { reactRouter } from '@react-router/dev/vite';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { defineConfig, type PluginOption } from 'vite';
@@ -38,6 +38,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
+        xfwd: true,
       },
     },
     allowedHosts: true,

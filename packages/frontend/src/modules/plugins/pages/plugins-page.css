@@ -1,0 +1,46 @@
+.plugins-intro {
+  overflow: hidden;
+  background-image: radial-gradient(ellipse at top right, rgba(var(--tblr-primary-rgb), 0.12), transparent 65%);
+}
+.plugins-hero-icon {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--tblr-primary-rgb), 0.1);
+  color: var(--tblr-primary);
+  border-radius: 24px;
+  transform: rotate(-8deg);
+}
+.plugins-lead {
+  max-width: 580px;
+  line-height: 1.7;
+}
+.plugins-search {
+  width: min(100%, 300px);
+}
+.plugin-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: rgba(var(--tblr-primary-rgb), 0.1);
+  color: var(--tblr-primary);
+}
+.plugin-icon-app-health {
+  background: rgba(47, 179, 68, 0.1);
+  color: var(--tblr-green);
+}
+.plugin-description {
+  min-height: 3rem;
+  line-height: 1.7;
+}
+.plugin-card {
+  transition: border-color 0.2s ease;
+}
+.plugin-card:hover {
+  border-color: rgba(var(--tblr-primary-rgb), 0.4);
+}

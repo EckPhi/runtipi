@@ -31,6 +31,8 @@ export default [
       route(':storeId/:appId/update', './modules/app/pages/app-update-page.tsx', { id: 'app-update' }),
     ]),
 
+    route('plugins', './modules/plugins/pages/plugins-page.tsx', { id: 'plugins' }),
+
     // Settings route
     ...prefix('settings', [index('./modules/settings/pages/settings-page.tsx', { id: 'settings' })]),
   ]),

@@ -29,3 +29,26 @@ test('removes the created temporary directory when it is not private', async () 
   await expect(filesystem.createTempDirectory('/tmp/runtipi-')).rejects.toThrow('not private');
   expect(removeDirectory).toHaveBeenCalledWith(directory);
 });
+
+test('atomically replaces JSON only after the temporary file has been written', async () => {
+  const filesystem = new FilesystemService({ error: vi.fn() } as never);
+  const write = vi.spyOn(fs.promises, 'writeFile').mockResolvedValue(undefined);
+  const rename = vi.spyOn(fs.promises, 'rename').mockResolvedValue(undefined);
+  const cleanup = vi.spyOn(fs.promises, 'rm').mockResolvedValue(undefined);
+  expect(await filesystem.writeJsonFileAtomic('/data/state/plugins/1.json', { 'app-health': true })).toBe(true);
+  const temporary = write.mock.calls[0]?.[0];
+  expect(temporary).toMatch(/^\/data\/state\/plugins\/1.json\..+\.tmp$/);
+  expect(rename).toHaveBeenCalledWith(temporary, '/data/state/plugins/1.json');
+  expect(cleanup).toHaveBeenCalledWith(temporary, { force: true });
+  expect(write.mock.invocationCallOrder[0]).toBeLessThan(rename.mock.invocationCallOrder[0] ?? 0);
+});
+
+test('keeps previous settings when an atomic write fails', async () => {
+  const filesystem = new FilesystemService({ error: vi.fn() } as never);
+  vi.spyOn(fs.promises, 'writeFile').mockRejectedValue(new Error('Disk full'));
+  const rename = vi.spyOn(fs.promises, 'rename').mockResolvedValue(undefined);
+  const cleanup = vi.spyOn(fs.promises, 'rm').mockResolvedValue(undefined);
+  expect(await filesystem.writeJsonFileAtomic('/data/state/plugins/1.json', {})).toBe(false);
+  expect(rename).not.toHaveBeenCalled();
+  expect(cleanup).toHaveBeenCalled();
+});

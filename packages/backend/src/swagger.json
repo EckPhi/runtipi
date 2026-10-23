@@ -126,6 +126,51 @@
         ]
       }
     },
+    "/api/plugins": {
+      "get": {
+        "operationId": "getPlugins",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/{id}/{action}": {
+      "post": {
+        "operationId": "updatePlugin",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
     "/api/i18n/locales/{ns}/{lng}.json": {
       "get": {
         "operationId": "getTranslation",

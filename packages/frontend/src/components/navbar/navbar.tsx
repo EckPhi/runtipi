@@ -1,5 +1,5 @@
 import { useUIStore } from '@/stores/ui-store';
-import { IconApps, IconBrandAppstore, IconHome, IconSettings } from '@tabler/icons-react';
+import { IconApps, IconBrandAppstore, IconHome, IconPlug, IconSettings } from '@tabler/icons-react';
 import clsx from 'clsx';
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +37,7 @@ export const NavBar: React.FC<IProps> = ({ isUpdateAvailable }) => {
           {renderItem(t('HEADER_DASHBOARD'), 'dashboard', IconHome)}
           {renderItem(t('HEADER_APPS'), 'apps', IconApps)}
           {renderItem(t('HEADER_APP_STORE'), 'app-store', IconBrandAppstore)}
+          {renderItem('Plugins', 'plugins', IconPlug)}
           {renderItem(t('HEADER_SETTINGS'), 'settings', IconSettings)}
         </ul>
         {Boolean(isUpdateAvailable) && (

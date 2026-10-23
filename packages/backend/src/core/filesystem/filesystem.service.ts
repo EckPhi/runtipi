@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import yaml from 'yaml';
 import { EOL } from 'node:os';
 import path from 'node:path';
@@ -103,6 +104,21 @@ export class FilesystemService {
     } catch (error) {
       this.logger.error(`Error writing file ${filePath}:`, error);
       return false;
+    }
+  }
+
+  async writeJsonFileAtomic<T>(filePath: string, data: T): Promise<boolean> {
+    const destination = this.getSafeFilePath(filePath);
+    const temporary = `${destination}.${randomUUID()}.tmp`;
+    try {
+      await fs.promises.writeFile(temporary, `${JSON.stringify(data, null, 2)}${EOL}`, 'utf8');
+      await fs.promises.rename(temporary, destination);
+      return true;
+    } catch (error) {
+      this.logger.error(`Error writing file ${filePath}:`, error);
+      return false;
+    } finally {
+      await fs.promises.rm(temporary, { force: true }).catch(() => undefined);
     }
   }
 

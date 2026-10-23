@@ -38,6 +38,8 @@ import { ArkValidationPipe } from 'nestjs-arktype';
 import { AppConfigModule } from './modules/app-config/app-config.module';
 import { CustomAppsModule } from './modules/custom-apps/custom-apps.module';
 
+import { PluginsModule } from './modules/plugins/plugins.module';
+
 const DEFAULT_THROTTLE_TTL = 60_000;
 const DEFAULT_THROTTLE_LIMIT = 300;
 
@@ -45,6 +47,7 @@ const imports: (DynamicModule | typeof I18nModule)[] = [
   SentryModule.forRoot(),
   ThrottlerModule.forRoot([{ ttl: DEFAULT_THROTTLE_TTL, limit: DEFAULT_THROTTLE_LIMIT }]),
   SystemModule,
+  PluginsModule,
   I18nModule,
   AuthModule,
   UserModule,

@@ -48,6 +48,7 @@ COPY ./packages/frontend/package.json ./packages/frontend/package.json
 COPY ./packages/common/package.json ./packages/common/package.json
 COPY ./packages/frontend/scripts ./packages/frontend/scripts
 COPY ./packages/frontend/public ./packages/frontend/public
+COPY ./patches ./patches
 
 RUN bun install --frozen-lockfile --verbose
 

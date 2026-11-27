@@ -148,7 +148,7 @@ export class AppsRepository {
     });
   }
 
-  public async finishRestore(appUrn: AppUrn, state: MigrationLedgerState, phase: 'recovered' | 'committed') {
+  public async finishRestore(appUrn: AppUrn, state: MigrationLedgerState, phase: 'recovered' | 'committed' | 'hooks-pending') {
     const installedApp = await this.getAppByUrn(appUrn);
     if (!installedApp) {
       throw new Error(`App ${appUrn} is not installed`);

@@ -45,7 +45,7 @@ test('restores a stopped app when broken compose or environment files prevent co
 
   await expect(command.execute(appUrn)).resolves.toEqual({ success: true, message: `App ${appUrn} restored successfully`, appStopped: true });
   expect(docker.listContainers).toHaveBeenCalledWith({ filters: { label: [`runtipi.appurn=${appUrn}`] } });
-  expect(backupManager.restoreApp).toHaveBeenCalledWith(appUrn, 'backup.tar.gz');
+  expect(backupManager.restoreApp).toHaveBeenCalledWith(appUrn, 'backup.tar.gz', { allowPartial: true });
   expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('continuing restore'), stopError);
 });
 
@@ -64,7 +64,7 @@ test('delegates the complete restore transaction to the backup manager', async (
   backupManager.restoreApp.mockResolvedValue(migrationState);
 
   await expect(command.execute(appUrn)).resolves.toEqual({ success: true, message: `App ${appUrn} restored successfully`, appStopped: true });
-  expect(backupManager.restoreApp).toHaveBeenCalledWith(appUrn, 'backup.tar.gz');
+  expect(backupManager.restoreApp).toHaveBeenCalledWith(appUrn, 'backup.tar.gz', { allowPartial: true });
   expect(docker.listContainers).not.toHaveBeenCalled();
 });
 

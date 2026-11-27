@@ -6,7 +6,7 @@ import { ConfigurationService } from '@/core/config/configuration.service';
 import { FilesystemService } from '@/core/filesystem/filesystem.service';
 import { LoggerService } from '@/core/logger/logger.service';
 import { Injectable } from '@nestjs/common';
-import { appInfoSchema, convertLegacyToYaml, dynamicComposeSchemaYaml } from '@runtipi/common/schemas';
+import { appBackupSchema, appInfoSchema, convertLegacyToYaml, dynamicComposeSchemaYaml } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
 import { type } from 'arktype';
 
@@ -42,6 +42,39 @@ export class AppFilesManager {
     const { appDataPath } = this.configuration.getConfig().userSettings;
 
     return path.join(appDataPath, 'app-data', appStoreId, appName);
+  }
+
+  // Read this block separately: invalid backup policies must never fall back to a full backup.
+  public async getAppBackupPolicy(appUrn: AppUrn) {
+    const { appInstalledDir } = this.getAppPaths(appUrn);
+    const configPath = this.filesystem.getSafeFilePath(path.join(appInstalledDir, 'config.json'));
+    const content = await fs.promises.readFile(configPath, 'utf8').catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') return '{}';
+      throw error;
+    });
+    const backup = JSON.parse(content).backup;
+    return appBackupSchema.assert(backup === undefined ? {} : backup);
+  }
+
+  public async getAppBackupHook(appUrn: AppUrn, hook: 'backup' | 'restore'): Promise<AppMigration | null> {
+    const { appInstalledDir } = this.getAppPaths(appUrn);
+    const directory = this.filesystem.getSafeFilePath(path.join(appInstalledDir, 'backup'));
+    const stats = await fs.promises.lstat(directory).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    });
+    if (!stats) return null;
+    if (!stats.isDirectory() || (await fs.promises.realpath(directory)) !== directory) {
+      throw new Error(`App backup hooks must use a regular directory: ${directory}`);
+    }
+    const hookPath = path.join(directory, `${hook}.yml`);
+    const hookStats = await fs.promises.lstat(hookPath).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    });
+    if (!hookStats) return null;
+    if (!hookStats.isFile()) throw new Error(`App backup hook must be a regular file: ${hookPath}`);
+    return { id: hook, path: hookPath };
   }
 
   public async getAppMigrations(appUrn: AppUrn): Promise<AppMigration[]> {

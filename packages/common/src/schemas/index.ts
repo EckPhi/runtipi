@@ -10,7 +10,16 @@ import {
   type ServicesSchema,
 } from './compose-yaml.js';
 
-import { APP_CATEGORIES, ARCHITECTURES, FIELD_TYPES, RANDOM_ENCODINGS, appInfoSchema, formFieldSchema, frontmatterSchema } from './app-info.js';
+import {
+  APP_CATEGORIES,
+  ARCHITECTURES,
+  FIELD_TYPES,
+  RANDOM_ENCODINGS,
+  appBackupSchema,
+  appInfoSchema,
+  formFieldSchema,
+  frontmatterSchema,
+} from './app-info.js';
 import type { AppCategory, AppInfo, AppInfoInput, FieldType, FormField, RandomEncoding } from './app-info.js';
 
 import { PLUGIN_CAPABILITIES, pluginManifestSchema, pluginSettingsSchema } from './plugin-manifest.js';
@@ -35,6 +44,7 @@ export {
   RANDOM_ENCODINGS,
   FIELD_TYPES,
   ARCHITECTURES,
+  appBackupSchema,
   appInfoSchema,
   sseSchema,
   frontmatterSchema,

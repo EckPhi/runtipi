@@ -43,7 +43,13 @@ export const formFieldSchema = type({
   encoding: type.enumerated(...RANDOM_ENCODINGS).optional(),
 });
 
+export const appBackupSchema = type({
+  stop: 'boolean = true',
+  include: 'string[]?',
+});
+
 export const appInfoSchema = type({
+  backup: appBackupSchema.optional(),
   id: type('string').narrow((v, ctx) => (v.split(':').length === 1 ? true : ctx.mustBe('a string without colons'))),
   urn: arkAppUrn,
   available: 'boolean',

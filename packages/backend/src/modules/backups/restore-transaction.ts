@@ -7,15 +7,16 @@ import type { AppsRepository } from '@/modules/apps/apps.repository';
 import type { AppUrn } from '@runtipi/common/types';
 import { type } from 'arktype';
 import { Effect } from 'effect';
+import { normalizeBackupIncludes } from './backup-policy';
 import { backupStep, requireFilesystemSuccess, runBackupEffect } from './backup-resources';
 
 const ledgerSchema = type({ initialized: 'boolean', migrationIds: 'string[]' });
 const directorySchema = type({ destination: 'string', staged: 'string', original: 'string', destinationExisted: 'boolean' });
 const journalSchema = type({
-  phase: "'prepared' | 'recovered' | 'committed'",
+  phase: "'prepared' | 'recovered' | 'committed' | 'hooks-pending'",
   previousState: ledgerSchema,
   targetState: ledgerSchema,
-  directories: directorySchema.array().exactlyLength(3),
+  directories: directorySchema.array(),
 });
 
 type RestoreSource = { source: string | null; destination: string; error: string };
@@ -28,9 +29,10 @@ export class RestoreTransaction {
     private readonly filesystem: FilesystemService,
     private readonly appsRepository: AppsRepository,
     private readonly logger: LoggerService,
+    private readonly restoreHook?: () => Promise<void>,
   ) {}
 
-  async restore(sources: RestoreSource[], targetState: MigrationLedgerState) {
+  async restore(sources: RestoreSource[], targetState: MigrationLedgerState, runHook = false) {
     const previousState = await this.appsRepository.getMigrationState(this.appUrn);
     const directories = await this.stageRestoredDirectories(sources);
 
@@ -61,10 +63,11 @@ export class RestoreTransaction {
 
     // The ledger and the commit decision must survive a lost database response together.
     await runBackupEffect(
-      backupStep(() => this.appsRepository.finishRestore(this.appUrn, targetState, 'committed')).pipe(
+      backupStep(() => this.appsRepository.finishRestore(this.appUrn, targetState, runHook ? 'hooks-pending' : 'committed')).pipe(
         Effect.onError(() => backupStep(() => this.reconcile()).pipe(Effect.orDie)),
       ),
     );
+    if (runHook) await this.finishHook(targetState);
     await this.cleanup(directories, 'original');
   }
 
@@ -80,8 +83,15 @@ export class RestoreTransaction {
       return;
     }
 
-    const directoryKind = journal.phase === 'committed' ? 'original' : 'staged';
+    if (journal.phase === 'hooks-pending') await this.finishHook(journal.targetState);
+    const directoryKind = journal.phase === 'recovered' ? 'staged' : 'original';
     await this.cleanup(journal.directories, directoryKind);
+  }
+
+  private async finishHook(state: MigrationLedgerState) {
+    if (!this.restoreHook) throw new Error('Pending restore hook cannot be recovered');
+    await this.restoreHook();
+    await this.appsRepository.finishRestore(this.appUrn, state, 'committed');
   }
 
   private async recover(previousState: MigrationLedgerState, directories: RestoreDirectory[]) {
@@ -120,11 +130,8 @@ export class RestoreTransaction {
 
     const destinations = new Set(journal.directories.map((directory) => directory.destination));
     const paths = journal.directories.flatMap((directory) => [directory.destination, directory.staged, directory.original]);
-    if (
-      destinations.size !== this.destinations.length ||
-      this.destinations.some((destination) => !destinations.has(destination)) ||
-      new Set(paths).size !== paths.length
-    ) {
+    const full = destinations.size === this.destinations.length && this.destinations.every((destination) => destinations.has(destination));
+    if (!(full || this.arePartialDestinations([...destinations])) || new Set(paths).size !== paths.length) {
       throw new Error('Restore journal directories are invalid');
     }
 
@@ -135,12 +142,26 @@ export class RestoreTransaction {
     return journal;
   }
 
+  private arePartialDestinations(destinations: string[]) {
+    const root = this.destinations[0];
+    if (!root) return false;
+    const relative = destinations.map((destination) => path.relative(root, destination) || '.');
+    try {
+      return (
+        destinations.every((destination) => path.isAbsolute(destination) && path.resolve(destination) === destination) &&
+        normalizeBackupIncludes(relative).length === relative.length
+      );
+    } catch {
+      return false;
+    }
+  }
+
   private async assertSafeRestoreDirectory(directory: RestoreDirectory) {
     const { destination, staged, original } = directory;
     const prefix = `.${path.basename(destination)}.restore-`;
     const suffix = path.basename(staged).slice(prefix.length);
     if (
-      !this.destinations.includes(destination) ||
+      !(this.destinations.includes(destination) || this.arePartialDestinations([destination])) ||
       !path.basename(staged).startsWith(prefix) ||
       !/^[A-Za-z0-9]{6}$/.test(suffix) ||
       path.dirname(staged) !== path.dirname(destination) ||
@@ -210,6 +231,9 @@ export class RestoreTransaction {
         replacements.push(replacement);
 
         if (directory.source) {
+          if ((await fs.promises.lstat(directory.source)).isFile()) {
+            await fs.promises.rmdir(staged);
+          }
           const copied = await this.filesystem.copyDirectory(directory.source, staged, { dereference: false, verbatimSymlinks: true });
           if (!copied) {
             throw new Error(directory.error);

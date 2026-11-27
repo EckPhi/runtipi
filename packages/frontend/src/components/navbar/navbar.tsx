@@ -15,7 +15,9 @@ export const NavBar: React.FC<IProps> = ({ isUpdateAvailable }) => {
   const activeRoute = useUIStore((state) => state.activeRoute);
 
   const renderItem = (title: string, name: string, IconComponent: typeof IconApps) => {
-    const isActive = activeRoute?.split('/')[0] === name;
+    const section = activeRoute?.split('/')[0];
+    // Plugin pages belong to the store, where plugins are browsed.
+    const isActive = section === name || (name === 'app-store' && section === 'plugins');
     const itemClass = clsx('nav-item', { active: isActive, 'border-primary': isActive });
 
     return (

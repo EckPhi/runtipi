@@ -20,6 +20,13 @@ export default [
       route(':storeId/:appId/update', './modules/app/pages/app-update-page.tsx', { id: 'app-store-app-update' }),
     ]),
 
+    // Plugin routes (browsed from the Plugins tab of the app store)
+    ...prefix('plugins', [
+      index('./routes/plugins-index.tsx', { id: 'plugins' }),
+      route(':storeId/:pluginId', './modules/plugins/pages/plugin-details-page.tsx', { id: 'plugin-details' }),
+      route(':storeId/:pluginId/settings', './modules/plugins/pages/plugin-settings-page.tsx', { id: 'plugin-settings' }),
+    ]),
+
     // My apps routes
     ...prefix('apps', [
       index('./modules/app/pages/my-apps-page.tsx', { id: 'my-apps' }),

@@ -12,6 +12,7 @@ const originalConfig = client.getConfig();
 afterEach(() => {
   client.setConfig(originalConfig);
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
 });
 
 const renderDialog = (onClose = vi.fn()) => {
@@ -21,9 +22,10 @@ const renderDialog = (onClose = vi.fn()) => {
 };
 
 it('keeps a failed sync open and reports the error instead of success', async () => {
-  client.setConfig({
-    baseUrl: 'http://localhost',
-    fetch: async (request) =>
+  client.setConfig({ baseUrl: 'http://localhost' });
+  vi.stubGlobal(
+    'fetch',
+    async (request: RequestInfo | URL) =>
       new Response(
         JSON.stringify(
           new Request(request).method === 'GET'
@@ -32,7 +34,7 @@ it('keeps a failed sync open and reports the error instead of success', async ()
         ),
         { status: new Request(request).method === 'GET' ? 200 : 400, headers: { 'Content-Type': 'application/json' } },
       ),
-  });
+  );
   const onClose = renderDialog();
   fireEvent.click(await screen.findByRole('button', { name: 'Sync Now' }));
   await waitFor(() => expect(toast.error).toHaveBeenCalled());
@@ -41,10 +43,8 @@ it('keeps a failed sync open and reports the error instead of success', async ()
 });
 
 it('shows a failed diff request as an error instead of no changes', async () => {
-  client.setConfig({
-    baseUrl: 'http://localhost',
-    fetch: async () => new Response(JSON.stringify({ message: 'APP_SYNC_ERROR' }), { status: 500 }),
-  });
+  client.setConfig({ baseUrl: 'http://localhost' });
+  vi.stubGlobal('fetch', async () => new Response(JSON.stringify({ message: 'APP_SYNC_ERROR' }), { status: 500 }));
   renderDialog();
   expect(await screen.findByRole('alert')).toBeTruthy();
   expect(screen.queryByText('Your app is already in sync with the template.')).toBeNull();

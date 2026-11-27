@@ -5,16 +5,17 @@ import { PluginUpdateDialog } from '../components/dialogs/plugin-update-dialog';
 import { createPluginInfo, renderWithProviders } from './plugin-test-utils';
 
 const originalConfig = client.getConfig();
-afterEach(() => client.setConfig(originalConfig));
+afterEach(() => {
+  client.setConfig(originalConfig);
+  vi.unstubAllGlobals();
+});
 
 it('allows correcting a carried setting for the target schema and submits only target fields', async () => {
   const requests: unknown[] = [];
-  client.setConfig({
-    baseUrl: 'http://localhost',
-    fetch: async (input) => {
-      requests.push(await new Request(input).json());
-      return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
-    },
+  client.setConfig({ baseUrl: 'http://localhost' });
+  vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
+    requests.push(await new Request(input).json());
+    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
   });
   const onClose = vi.fn();
   renderWithProviders(
@@ -24,7 +25,7 @@ it('allows correcting a carried setting for the target schema and submits only t
         settings: {
           global: [
             { type: 'text', env_variable: 'MODE', label: 'Mode', required: true, regex: '^new$' },
-            { type: 'random', env_variable: 'SECRET', label: 'Secret' },
+            { type: 'random', env_variable: 'SECRET', label: 'Secret', required: false },
             { type: 'number', env_variable: 'RETRIES', label: 'Retries', required: true },
           ],
           per_app: [],

@@ -706,5 +706,14 @@
   "SETTINGS_AGENT_COPY_CONFIG": "Copy configuration",
   "SETTINGS_AGENT_CONFIG_COPIED": "Copied!",
   "SETTINGS_AGENT_CONFIG_COPY_ERROR": "Could not copy automatically. Select the configuration above and copy it manually.",
-  "SETTINGS_AGENT_CONFIG_ENV": "Set RUNTIPI_MCP_TOKEN in the environment that launches your agent, using the token above. Keep the token out of project files."
+  "SETTINGS_AGENT_CONFIG_ENV": "Set RUNTIPI_MCP_TOKEN in the environment that launches your agent, using the token above. Keep the token out of project files.",
+  "APP_STORE_DELETE_ERROR_PLUGINS_EXIST": "There are installed plugins that belong to this appstore. Please remove them first",
+  "PLUGIN_ERROR_NOT_FOUND": "Plugin {{id}} not found",
+  "PLUGIN_ERROR_NOT_AVAILABLE": "Plugin {{id}} is not available for installation",
+  "PLUGIN_ERROR_ALREADY_INSTALLED": "Plugin {{id}} is already installed",
+  "PLUGIN_ERROR_NOT_INSTALLED": "Plugin {{id}} is not installed",
+  "PLUGIN_ERROR_NO_UPDATE_AVAILABLE": "Plugin {{id}} is already up to date",
+  "PLUGIN_ERROR_MIN_TIPI_VERSION": "Plugin {{id}} requires Runtipi version {{minVersion}} or higher. Please update your instance.",
+  "PLUGIN_ERROR_INVALID_CONFIG": "Invalid configuration for plugin {{id}}: {{reason}}",
+  "PLUGIN_ERROR_INSTALL_FAILED": "Failed to install plugin {{id}}"
 }

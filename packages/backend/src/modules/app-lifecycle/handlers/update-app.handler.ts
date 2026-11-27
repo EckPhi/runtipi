@@ -3,7 +3,7 @@ import { ConfigurationService } from '@/core/config/configuration.service';
 import { LoggerService } from '@/core/logger/logger.service';
 import { ConflictException, HttpStatus, Injectable } from '@nestjs/common';
 import type { AppUrn } from '@runtipi/common/types';
-import semver from 'semver';
+import { isBelowMinTipiVersion } from '@/common/helpers/version-helpers';
 import { AppsRepository } from '../../apps/apps.repository';
 import { MarketplaceService } from '../../marketplace/marketplace.service';
 import { AppLifecycleCommandFactory } from '../app-lifecycle-command.factory';
@@ -34,8 +34,8 @@ export class UpdateAppHandler implements ILifecycleHandler<UpdateAppParams> {
     const version = this.config.get('version');
     const { minTipiVersion } = await this.marketplaceService.getAppUpdateInfo(appUrn);
 
-    if (minTipiVersion && semver.valid(version) && semver.lt(version, minTipiVersion)) {
-      throw new TranslatableError('APP_UPDATE_ERROR_MIN_TIPI_VERSION', { id: appUrn, minVersion: minTipiVersion });
+    if (isBelowMinTipiVersion(version, minTipiVersion)) {
+      throw new TranslatableError('APP_UPDATE_ERROR_MIN_TIPI_VERSION', { id: appUrn, minVersion: minTipiVersion ?? undefined });
     }
 
     const request: HandlerResult = this.jobs.submit(appUrn, 'update', async (context) => {

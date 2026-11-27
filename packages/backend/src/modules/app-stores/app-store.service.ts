@@ -129,6 +129,12 @@ export class AppStoreService {
       throw new TranslatableError('APP_STORE_DELETE_ERROR_APPS_EXIST', {}, HttpStatus.BAD_REQUEST);
     }
 
+    const pluginCount = await this.appStoreRepository.getPluginCountForStore(slug);
+
+    if (pluginCount && pluginCount.count > 0) {
+      throw new TranslatableError('APP_STORE_DELETE_ERROR_PLUGINS_EXIST', {}, HttpStatus.BAD_REQUEST);
+    }
+
     await this.appStoreRepository.removeAppStoreEntity(slug);
     await this.repoHelpers.deleteRepo(slug);
 

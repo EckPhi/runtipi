@@ -6,6 +6,7 @@ import type { AppStore } from '@/core/database/drizzle/types';
 import { FilesystemService } from '@/core/filesystem/filesystem.service';
 import { LoggerService } from '@/core/logger/logger.service';
 import { Injectable } from '@nestjs/common';
+import type { PluginCapability, PluginManifest } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
 import MiniSearch from 'minisearch';
 import { AppStoreFilesManager } from '../app-stores/app-store-files-manager';
@@ -13,6 +14,7 @@ import { AppStoreService, RESERVED_APP_STORE_SLUGS } from '../app-stores/app-sto
 
 type AppList = Awaited<ReturnType<InstanceType<typeof MarketplaceService>['getAllAppFromStores']>>;
 type CatalogSnapshot = { apps: AppList; search: MiniSearch<AppList[number]>; createdAt: number };
+type PluginCatalogSnapshot = { plugins: PluginManifest[]; search: MiniSearch<PluginManifest>; createdAt: number };
 
 const sortApps = (a: AppList[number], b: AppList[number]) => a.urn.localeCompare(b.urn);
 const filterApp =
@@ -34,6 +36,8 @@ export class MarketplaceService {
   private stores: Map<string, AppStoreFilesManager> = new Map();
   private catalog: CatalogSnapshot | null = null;
   private catalogLoad: Promise<CatalogSnapshot> | null = null;
+  private pluginCatalog: PluginCatalogSnapshot | null = null;
+  private pluginCatalogLoad: Promise<PluginCatalogSnapshot> | null = null;
   private cacheTimeout = 1000 * 60 * 15; // 15 minutes
   private generation = 0;
   private publishedGeneration = 0;
@@ -198,6 +202,7 @@ export class MarketplaceService {
   private invalidateCache() {
     this.cacheGeneration++;
     this.catalog = null;
+    this.pluginCatalog = null;
   }
 
   private async loadCatalog() {
@@ -281,6 +286,132 @@ export class MarketplaceService {
       total: filteredApps.length,
       nextCursor: filteredApps[end]?.urn ?? null,
     };
+  }
+
+  private async getAllPluginsFromStores() {
+    const stores = [...this.stores.values()].filter((store) => store.storeConfig.enabled);
+    const limit = pLimit(10);
+    const plugins = await Promise.all(
+      stores.map(async (store) => {
+        const urns = await store.getAvailablePluginUrns();
+        return Promise.all(urns.map((urn) => limit(() => store.getPluginInfoFromStore(urn))));
+      }),
+    );
+
+    return plugins
+      .flat()
+      .filter(notEmpty)
+      .filter((plugin) => plugin.available && !plugin.deprecated)
+      .sort((a, b) => a.urn.localeCompare(b.urn));
+  }
+
+  private async loadPluginCatalog() {
+    while (true) {
+      const generation = this.cacheGeneration;
+      const plugins = await this.getAllPluginsFromStores();
+      if (generation !== this.cacheGeneration) continue;
+
+      const search = new MiniSearch<PluginManifest>({
+        fields: ['name', 'short_desc', 'capabilities'],
+        storeFields: ['urn'],
+        idField: 'urn',
+        extractField: (document, fieldName) => {
+          const value = document[fieldName as keyof PluginManifest];
+          return Array.isArray(value) ? value.join(' ') : (value as string);
+        },
+        searchOptions: { boost: { name: 2 }, fuzzy: 0.2, prefix: true },
+      });
+      search.addAll(plugins);
+
+      const snapshot: PluginCatalogSnapshot = { plugins, search, createdAt: Date.now() };
+      this.pluginCatalog = snapshot;
+      return snapshot;
+    }
+  }
+
+  private async getPluginCatalog() {
+    while (true) {
+      if (this.pluginCatalog && Date.now() - this.pluginCatalog.createdAt > this.cacheTimeout) this.invalidateCache();
+      if (this.pluginCatalog) return this.pluginCatalog;
+
+      const load = this.pluginCatalogLoad ?? this.loadPluginCatalog();
+      this.pluginCatalogLoad = load;
+      try {
+        await load;
+      } finally {
+        if (this.pluginCatalogLoad === load) this.pluginCatalogLoad = null;
+      }
+    }
+  }
+
+  /**
+   * All installable plugins of the enabled stores. Deprecated or unavailable plugins are left out.
+   */
+  public async getAvailablePlugins(): Promise<PluginManifest[]> {
+    return (await this.getPluginCatalog()).plugins;
+  }
+
+  public async searchPlugins(params: {
+    search?: string | null;
+    capability?: PluginCapability | null;
+    storeId?: string | null;
+    pageSize?: number;
+    cursor?: string | null;
+  }) {
+    const { search, capability, storeId, pageSize, cursor } = params;
+
+    const catalog = await this.getPluginCatalog();
+    let filtered = catalog.plugins;
+
+    if (storeId) {
+      filtered = filtered.filter((plugin) => extractAppUrn(plugin.urn).appStoreId === storeId);
+    }
+
+    if (capability) {
+      filtered = filtered.filter((plugin) => plugin.capabilities.includes(capability));
+    }
+
+    if (search) {
+      const searchIds = catalog.search.search(search).map((result) => result.id);
+      filtered = filtered.filter((plugin) => searchIds.includes(plugin.urn)).sort((a, b) => searchIds.indexOf(a.urn) - searchIds.indexOf(b.urn));
+    }
+
+    const start = cursor
+      ? Math.max(
+          filtered.findIndex((plugin) => plugin.urn === cursor),
+          0,
+        )
+      : 0;
+    const end = start + (pageSize ?? 24);
+
+    return {
+      data: filtered.slice(start, end),
+      total: filtered.length,
+      nextCursor: filtered[end]?.urn ?? null,
+    };
+  }
+
+  /**
+   * Get a plugin manifest straight from its store repository, regardless of whether the store is enabled.
+   */
+  public async getPluginInfoFromStore(pluginUrn: AppUrn) {
+    const { store } = this.getStoreFromUrn(pluginUrn);
+    return store.getPluginInfoFromStore(pluginUrn);
+  }
+
+  public async getInstalledPluginInfo(pluginUrn: AppUrn) {
+    const { store } = this.getStoreFromUrn(pluginUrn);
+    return store.getInstalledPluginInfo(pluginUrn);
+  }
+
+  public async copyPluginFromRepoToInstalled(pluginUrn: AppUrn) {
+    const { store } = this.getStoreFromUrn(pluginUrn);
+    return store.copyPluginFromRepoToInstalled(pluginUrn);
+  }
+
+  public async removeInstalledPlugin(pluginUrn: AppUrn) {
+    const { store } = this.getStoreFromUrn(pluginUrn);
+    return store.removeInstalledPlugin(pluginUrn);
   }
 
   /**

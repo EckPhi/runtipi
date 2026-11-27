@@ -42,6 +42,22 @@ describe('AppStoreService', () => {
     expect(repoHelpers.deleteRepo).not.toHaveBeenCalled();
   });
 
+  it('rejects deleting an app store that still has installed plugins', async () => {
+    appStoreRepository.getAllAppStores.mockResolvedValue([
+      fromAny({ slug: 'primary', url: 'https://example.com/primary.git', hash: 'primary', name: 'Primary', enabled: true }),
+      fromAny({ slug: 'secondary', url: 'https://example.com/secondary.git', hash: 'secondary', name: 'Secondary', enabled: true }),
+    ]);
+    appStoreRepository.getAppCountForStore.mockResolvedValue({ count: 0 });
+    appStoreRepository.getPluginCountForStore.mockResolvedValue({ count: 1 });
+
+    await expect(appStoreService.deleteAppStore('secondary')).rejects.toMatchObject({
+      response: { message: 'APP_STORE_DELETE_ERROR_PLUGINS_EXIST' },
+    });
+
+    expect(appStoreRepository.removeAppStoreEntity).not.toHaveBeenCalled();
+    expect(repoHelpers.deleteRepo).not.toHaveBeenCalled();
+  });
+
   it('rejects creating an app store when slugify produces an unsafe slug', async () => {
     repoHelpers.getRepoHash.mockReturnValue('hash');
     appStoreRepository.getAppStoreByHash.mockResolvedValue(undefined);

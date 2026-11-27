@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { APP_GENERATED_COMPOSE_FILENAME, APP_REL_COMPOSE_FILENAME } from '@/common/constants';
 import { extractAppUrn } from '@/common/helpers/app-helpers';
@@ -6,9 +7,11 @@ import type { ConfigurationService } from '@/core/config/configuration.service';
 import type { AppStore } from '@/core/database/drizzle/types';
 import type { FilesystemService } from '@/core/filesystem/filesystem.service';
 import type { LoggerService } from '@/core/logger/logger.service';
-import { appInfoSchema, convertLegacyToYaml } from '@runtipi/common/schemas';
+import { appInfoSchema, convertLegacyToYaml, pluginManifestSchema } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
 import { type } from 'arktype';
+
+export const PLUGIN_MANIFEST_FILENAME = 'plugin.json';
 
 export class AppStoreFilesManager {
   constructor(
@@ -27,6 +30,150 @@ export class AppStoreFilesManager {
   private getAppStoreFolder() {
     const { directories } = this.configuration.getConfig();
     return path.join(directories.dataDir, 'repos', this.storeConfig.slug, 'apps');
+  }
+
+  private getPluginStoreFolder() {
+    const { directories } = this.configuration.getConfig();
+    return path.join(directories.dataDir, 'repos', this.storeConfig.slug, 'plugins');
+  }
+
+  private getInstalledPluginsFolder() {
+    const { directories } = this.configuration.getConfig();
+    return path.join(directories.dataDir, 'plugins');
+  }
+
+  /**
+   * List the names of the sub-directories of a store folder, skipping test fixtures.
+   */
+  private async listStoreEntries(folder: string) {
+    const entries = await this.filesystem.listFiles(folder);
+    const skippedDirs = ['__tests__'];
+
+    const dirs = await Promise.all(
+      entries
+        .filter((entry) => !skippedDirs.includes(entry))
+        .map(async (entry) => ((await this.filesystem.isDirectory(path.join(folder, entry))) ? entry : null)),
+    );
+
+    return dirs.filter((entry): entry is string => entry !== null);
+  }
+
+  public getPluginPaths(pluginUrn: AppUrn) {
+    const { appStoreId, appName: pluginId } = extractAppUrn(pluginUrn);
+
+    return {
+      pluginRepoDir: path.join(this.getPluginStoreFolder(), pluginId),
+      pluginInstalledDir: path.join(this.getInstalledPluginsFolder(), appStoreId, pluginId),
+    };
+  }
+
+  /**
+   * Get the list of plugin urns available in this store. A store without a `plugins/` folder simply has no plugins.
+   */
+  public async getAvailablePluginUrns() {
+    const pluginsRepoFolder = this.getPluginStoreFolder();
+
+    if (!(await this.filesystem.isDirectory(pluginsRepoFolder))) {
+      return [];
+    }
+
+    const plugins = await this.listStoreEntries(pluginsRepoFolder);
+    return plugins.map((plugin) => `${plugin}:${this.storeConfig.slug}` as AppUrn);
+  }
+
+  private async getPluginInfoFromDirectory(pluginUrn: AppUrn, pluginDirectory: string) {
+    const manifestPath = path.join(pluginDirectory, PLUGIN_MANIFEST_FILENAME);
+
+    if (!(await this.filesystem.isFile(manifestPath))) {
+      return null;
+    }
+
+    let manifest: unknown;
+    try {
+      manifest = JSON.parse((await this.filesystem.readTextFile(manifestPath)) ?? '{}');
+    } catch (error) {
+      this.logger.error(`Plugin ${pluginUrn} has an invalid ${PLUGIN_MANIFEST_FILENAME}:`, error);
+      return null;
+    }
+
+    const { appName: pluginId } = extractAppUrn(pluginUrn);
+    const parsed = pluginManifestSchema({ ...(manifest as object), urn: pluginUrn });
+
+    if (parsed instanceof type.errors) {
+      this.logger.error(`Plugin ${pluginUrn} manifest error:`);
+      this.logger.error(parsed.summary);
+      return null;
+    }
+
+    if (parsed.id !== pluginId) {
+      this.logger.error(`Plugin ${pluginUrn} manifest id "${parsed.id}" does not match its folder name "${pluginId}"`);
+      return null;
+    }
+
+    return parsed;
+  }
+
+  /**
+   * Get a plugin manifest from the store repository. Returns null when the plugin does not exist or its manifest is invalid.
+   */
+  public async getPluginInfoFromStore(pluginUrn: AppUrn) {
+    try {
+      const { pluginRepoDir } = this.getPluginPaths(pluginUrn);
+      return await this.getPluginInfoFromDirectory(pluginUrn, pluginRepoDir);
+    } catch (error) {
+      this.logger.error(`Error getting plugin info from store for ${pluginUrn}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Get the manifest of the installed copy of a plugin.
+   */
+  public async getInstalledPluginInfo(pluginUrn: AppUrn) {
+    try {
+      const { pluginInstalledDir } = this.getPluginPaths(pluginUrn);
+      return await this.getPluginInfoFromDirectory(pluginUrn, pluginInstalledDir);
+    } catch (error) {
+      this.logger.error(`Error getting installed plugin info for ${pluginUrn}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Copy a plugin from the store repository to the installed plugins folder, replacing any previous copy.
+   */
+  public async copyPluginFromRepoToInstalled(pluginUrn: AppUrn) {
+    const { pluginRepoDir, pluginInstalledDir } = this.getPluginPaths(pluginUrn);
+
+    if (!(await this.filesystem.isDirectory(pluginRepoDir))) {
+      throw new Error(`Plugin ${pluginUrn} not found in repo ${this.storeConfig.slug}`);
+    }
+
+    if (!(await this.filesystem.removeDirectory(pluginInstalledDir))) {
+      throw new Error(`Failed to remove installed files for plugin ${pluginUrn}`);
+    }
+
+    if (!(await this.filesystem.createDirectory(pluginInstalledDir))) {
+      throw new Error(`Failed to create installed files directory for plugin ${pluginUrn}`);
+    }
+
+    // Symlinks are skipped so an installed plugin can never point back into (or outside of) the repository.
+    const copied = await this.filesystem.copyDirectory(pluginRepoDir, pluginInstalledDir, {
+      filter: async (source) => !(await fs.promises.lstat(source)).isSymbolicLink(),
+    });
+
+    if (!copied) {
+      await this.filesystem.removeDirectory(pluginInstalledDir);
+      throw new Error(`Failed to copy plugin ${pluginUrn} from repo ${this.storeConfig.slug}`);
+    }
+  }
+
+  public async removeInstalledPlugin(pluginUrn: AppUrn) {
+    const { pluginInstalledDir } = this.getPluginPaths(pluginUrn);
+
+    if (!(await this.filesystem.removeDirectory(pluginInstalledDir))) {
+      throw new Error(`Failed to remove installed files for plugin ${pluginUrn}`);
+    }
   }
 
   public getAppPaths(appUrn: AppUrn) {
@@ -218,20 +365,9 @@ export class AppStoreFilesManager {
       return [];
     }
 
-    const appsDir = await this.filesystem.listFiles(appsRepoFolder);
-    const skippedDirs = ['__tests__'];
+    const validApps = await this.listStoreEntries(appsRepoFolder);
 
-    const validApps = await Promise.all(
-      appsDir
-        .filter((app) => !skippedDirs.includes(app))
-        .map(async (app) => {
-          const appPath = path.join(appsRepoFolder, app);
-          const isDir = await this.filesystem.isDirectory(appPath);
-          return isDir ? app : null;
-        }),
-    );
-
-    return validApps.filter((app): app is string => app !== null).map((app) => `${app}:${this.storeConfig.slug}` as AppUrn);
+    return validApps.map((app) => `${app}:${this.storeConfig.slug}` as AppUrn);
   }
 
   /**

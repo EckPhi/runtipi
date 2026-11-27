@@ -1,11 +1,11 @@
 import { TranslatableError } from '@/common/error/translatable-error';
+import { isBelowMinTipiVersion } from '@/common/helpers/version-helpers';
 import { ConfigurationService } from '@/core/config/configuration.service';
 import { LoggerService } from '@/core/logger/logger.service';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { type } from 'arktype';
 import type { AppInfo } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
-import { lt, valid } from 'semver';
 import validator from 'validator';
 import { AppsRepository } from '../../apps/apps.repository';
 import { appFormSchema } from '../dto/app-lifecycle.dto';
@@ -43,8 +43,8 @@ export class AppValidationService {
   private validateMinTipiVersion(appUrn: AppUrn, minTipiVersion?: string | null) {
     const { version } = this.config.getConfig();
 
-    if (minTipiVersion && valid(version) && lt(version, minTipiVersion)) {
-      throw new TranslatableError('APP_UPDATE_ERROR_MIN_TIPI_VERSION', { id: appUrn, minVersion: minTipiVersion });
+    if (isBelowMinTipiVersion(version, minTipiVersion)) {
+      throw new TranslatableError('APP_UPDATE_ERROR_MIN_TIPI_VERSION', { id: appUrn, minVersion: minTipiVersion ?? undefined });
     }
   }
 

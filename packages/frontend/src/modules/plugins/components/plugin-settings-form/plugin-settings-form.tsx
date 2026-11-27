@@ -1,4 +1,4 @@
-import { hiddenTypes, validateAppConfig } from '@/modules/app/components/install-form/form-validators';
+import { hiddenTypes, validateField } from '@/modules/app/components/install-form/form-validators';
 import type { FormValues } from '@/modules/app/components/install-form/install-form';
 import { InstallFormField } from '@/modules/app/components/install-form/install-form-field';
 import type { FormField } from '@/types/app.types';
@@ -34,14 +34,14 @@ export const PluginSettingsForm = ({ fields, formId, initialValues, loading, onS
   } = useForm<FormValues>({ defaultValues: initialValues as FormValues | undefined });
 
   const submit = (values: FormValues) => {
-    const formFields = fields as FormField[];
-    const validationErrors = validateAppConfig(values, formFields);
     let valid = true;
 
-    for (const [key, value] of Object.entries(validationErrors)) {
-      if (value) {
+    for (const field of visibleFields(fields)) {
+      const value = values[field.env_variable];
+      const error = validateField(field as FormField, typeof value === 'number' ? String(value) : value);
+      if (error) {
         valid = false;
-        setError(key, { message: t(value.messageKey, value.params) });
+        setError(field.env_variable, { message: t(error.messageKey, error.params) });
       }
     }
 

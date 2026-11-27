@@ -21,9 +21,9 @@ export const PluginUpdateDialog = ({ info, installedVersion, currentConfig, isOp
   const formId = useId();
   const { update } = usePluginMutations(info.name, { onSuccess: onClose });
 
-  // Only ask for settings the new version adds; existing values are carried over by the backend.
-  const newFields = info.settings.global.filter((field) => !(field.env_variable in currentConfig));
-  const hasNewSettings = hasVisiblePluginSettings(newFields);
+  // Existing values may need correction when the target version changes their constraints or type.
+  const fields = info.settings.global;
+  const hasSettings = hasVisiblePluginSettings(fields);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -34,9 +34,10 @@ export const PluginUpdateDialog = ({ info, installedVersion, currentConfig, isOp
         <ScrollArea maxheight={500}>
           <DialogDescription>
             <p>{t('PLUGIN_UPDATE_FORM_SUBTITLE', { current: installedVersion, latest: info.version })}</p>
-            {hasNewSettings && <h4 className="mb-2">{t('PLUGIN_UPDATE_FORM_NEW_SETTINGS')}</h4>}
+            {hasSettings && <h4 className="mb-2">{t('PLUGIN_SETTINGS_TITLE')}</h4>}
             <PluginSettingsForm
-              fields={newFields}
+              fields={fields}
+              initialValues={currentConfig}
               formId={formId}
               loading={update.isPending}
               onSubmit={(globalConfig) => update.mutate({ path: { urn: info.urn }, body: { globalConfig } })}

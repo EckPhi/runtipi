@@ -109,8 +109,13 @@ export class PluginsService {
     pageSize?: number;
     cursor?: string | null;
   }) {
-    const result = await this.marketplace.searchPlugins(params);
-    const installed = new Set((await this.repository.getPlugins()).map((row) => row.urn));
+    const rows = await this.repository.getPlugins();
+    const installed = new Set(rows.map((row) => row.urn));
+    const manifests = await Promise.all(rows.map((row) => this.marketplace.getInstalledPluginInfo(row.urn as AppUrn).catch(() => null)));
+    const result = await this.marketplace.searchPlugins(
+      params,
+      manifests.filter((manifest): manifest is PluginManifest => manifest !== null),
+    );
 
     return {
       ...result,
@@ -119,19 +124,20 @@ export class PluginsService {
   }
 
   public async getCatalogPlugin(urn: AppUrn) {
-    const info = await this.getStoreManifest(urn);
+    const catalogInfo = await this.getStoreManifest(urn);
+    const row = await this.repository.getPluginByUrn(urn);
+    const installed = row ? await this.toInstalledPlugin(row) : null;
+    const info = catalogInfo ?? installed?.info;
 
     if (!info) {
       throw new TranslatableError('PLUGIN_ERROR_NOT_FOUND', { id: urn }, HttpStatus.NOT_FOUND);
     }
 
-    const row = await this.repository.getPluginByUrn(urn);
-
     return {
       info,
       compatibility: this.getCompatibility(info),
-      installed: row ? await this.toInstalledPlugin(row) : null,
-      updateAvailable: row ? info.tipi_version > row.tipiVersion : false,
+      installed,
+      updateAvailable: row && catalogInfo ? catalogInfo.tipi_version > row.tipiVersion : false,
     };
   }
 

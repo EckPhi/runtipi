@@ -305,23 +305,28 @@ export class MarketplaceService {
       .sort((a, b) => a.urn.localeCompare(b.urn));
   }
 
+  private createPluginSearch(plugins: PluginManifest[]) {
+    const search = new MiniSearch<PluginManifest>({
+      fields: ['name', 'short_desc', 'capabilities'],
+      storeFields: ['urn'],
+      idField: 'urn',
+      extractField: (document, fieldName) => {
+        const value = document[fieldName as keyof PluginManifest];
+        return Array.isArray(value) ? value.join(' ') : (value as string);
+      },
+      searchOptions: { boost: { name: 2 }, fuzzy: 0.2, prefix: true },
+    });
+    search.addAll(plugins);
+    return search;
+  }
+
   private async loadPluginCatalog() {
     while (true) {
       const generation = this.cacheGeneration;
       const plugins = await this.getAllPluginsFromStores();
       if (generation !== this.cacheGeneration) continue;
 
-      const search = new MiniSearch<PluginManifest>({
-        fields: ['name', 'short_desc', 'capabilities'],
-        storeFields: ['urn'],
-        idField: 'urn',
-        extractField: (document, fieldName) => {
-          const value = document[fieldName as keyof PluginManifest];
-          return Array.isArray(value) ? value.join(' ') : (value as string);
-        },
-        searchOptions: { boost: { name: 2 }, fuzzy: 0.2, prefix: true },
-      });
-      search.addAll(plugins);
+      const search = this.createPluginSearch(plugins);
 
       const snapshot: PluginCatalogSnapshot = { plugins, search, createdAt: Date.now() };
       this.pluginCatalog = snapshot;
@@ -351,17 +356,25 @@ export class MarketplaceService {
     return (await this.getPluginCatalog()).plugins;
   }
 
-  public async searchPlugins(params: {
-    search?: string | null;
-    capability?: PluginCapability | null;
-    storeId?: string | null;
-    pageSize?: number;
-    cursor?: string | null;
-  }) {
+  public async searchPlugins(
+    params: {
+      search?: string | null;
+      capability?: PluginCapability | null;
+      storeId?: string | null;
+      pageSize?: number;
+      cursor?: string | null;
+    },
+    installedManifests: PluginManifest[] = [],
+  ) {
     const { search, capability, storeId, pageSize, cursor } = params;
 
     const catalog = await this.getPluginCatalog();
-    let filtered = catalog.plugins;
+    // Installed copies remain manageable even after disappearing from the installable catalog.
+    // Prefer the catalog version when both exist so update metadata stays current.
+    const catalogUrns = new Set(catalog.plugins.map((plugin) => plugin.urn));
+    const missing = installedManifests.filter((plugin) => !catalogUrns.has(plugin.urn));
+    let filtered = [...catalog.plugins, ...missing].sort((a, b) => a.urn.localeCompare(b.urn));
+    const searchIndex = missing.length ? this.createPluginSearch(filtered) : catalog.search;
 
     if (storeId) {
       filtered = filtered.filter((plugin) => extractAppUrn(plugin.urn).appStoreId === storeId);
@@ -372,7 +385,7 @@ export class MarketplaceService {
     }
 
     if (search) {
-      const searchIds = catalog.search.search(search).map((result) => result.id);
+      const searchIds = searchIndex.search(search).map((result) => result.id);
       filtered = filtered.filter((plugin) => searchIds.includes(plugin.urn)).sort((a, b) => searchIds.indexOf(a.urn) - searchIds.indexOf(b.urn));
     }
 

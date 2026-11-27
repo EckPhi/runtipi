@@ -13,7 +13,7 @@ import { AppStoreFilesManager } from '../app-store-files-manager';
 vi.unmock('fs');
 vi.unmock('node:fs');
 
-test('installed plugin copies skip symlinks', async () => {
+test('staged and installed plugin copies skip symlinks', async () => {
   const dataDir = await fs.promises.mkdtemp('/tmp/runtipi-plugin-');
   onTestFinished(() => fs.promises.rm(dataDir, { recursive: true, force: true }));
 
@@ -30,7 +30,8 @@ test('installed plugin copies skip symlinks', async () => {
   await fs.promises.writeFile(path.join(dataDir, 'secret'), 'secret');
   await fs.promises.symlink(path.join(dataDir, 'secret'), path.join(pluginRepoDir, 'assets', 'leak'));
 
-  await manager.copyPluginFromRepoToInstalled(urn);
+  const { stagingDir } = await manager.stagePlugin(urn);
+  await (await manager.promoteStagedPlugin(urn, stagingDir)).commit();
 
   expect(await fs.promises.readFile(path.join(pluginInstalledDir, 'assets', 'icon.svg'), 'utf8')).toBe('<svg/>');
   expect(fs.existsSync(path.join(pluginInstalledDir, 'plugin.json'))).toBe(true);

@@ -404,9 +404,19 @@ export class MarketplaceService {
     return store.getInstalledPluginInfo(pluginUrn);
   }
 
-  public async copyPluginFromRepoToInstalled(pluginUrn: AppUrn) {
+  public async stagePlugin(pluginUrn: AppUrn) {
     const { store } = this.getStoreFromUrn(pluginUrn);
-    return store.copyPluginFromRepoToInstalled(pluginUrn);
+    return store.stagePlugin(pluginUrn);
+  }
+
+  public async discardStagedPlugin(pluginUrn: AppUrn, stagingDir: string) {
+    const { store } = this.getStoreFromUrn(pluginUrn);
+    return store.discardStagedPlugin(stagingDir);
+  }
+
+  public async promoteStagedPlugin(pluginUrn: AppUrn, stagingDir: string) {
+    const { store } = this.getStoreFromUrn(pluginUrn);
+    return store.promoteStagedPlugin(pluginUrn, stagingDir);
   }
 
   public async removeInstalledPlugin(pluginUrn: AppUrn) {

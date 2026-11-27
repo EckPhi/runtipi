@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { APP_GENERATED_COMPOSE_FILENAME, APP_REL_COMPOSE_FILENAME } from '@/common/constants';
@@ -139,33 +140,84 @@ export class AppStoreFilesManager {
     }
   }
 
+  private getPluginStagingFolder() {
+    return path.join(this.getInstalledPluginsFolder(), '.staging');
+  }
+
   /**
-   * Copy a plugin from the store repository to the installed plugins folder, replacing any previous copy.
+   * Copy a plugin from the store repository into a private staging directory and read its manifest from that copy.
+   * Validating the staged manifest guarantees that what is checked is exactly what gets installed, even if the
+   * repository is pulled concurrently. The caller must either promote or discard the staged copy.
    */
-  public async copyPluginFromRepoToInstalled(pluginUrn: AppUrn) {
-    const { pluginRepoDir, pluginInstalledDir } = this.getPluginPaths(pluginUrn);
+  public async stagePlugin(pluginUrn: AppUrn) {
+    const { pluginRepoDir } = this.getPluginPaths(pluginUrn);
 
     if (!(await this.filesystem.isDirectory(pluginRepoDir))) {
       throw new Error(`Plugin ${pluginUrn} not found in repo ${this.storeConfig.slug}`);
     }
 
-    if (!(await this.filesystem.removeDirectory(pluginInstalledDir))) {
-      throw new Error(`Failed to remove installed files for plugin ${pluginUrn}`);
-    }
+    const { appName: pluginId } = extractAppUrn(pluginUrn);
+    const stagingDir = path.join(this.getPluginStagingFolder(), `${this.storeConfig.slug}-${pluginId}-${crypto.randomUUID()}`);
 
-    if (!(await this.filesystem.createDirectory(pluginInstalledDir))) {
-      throw new Error(`Failed to create installed files directory for plugin ${pluginUrn}`);
+    if (!(await this.filesystem.createDirectory(stagingDir))) {
+      throw new Error(`Failed to create staging directory for plugin ${pluginUrn}`);
     }
 
     // Symlinks are skipped so an installed plugin can never point back into (or outside of) the repository.
-    const copied = await this.filesystem.copyDirectory(pluginRepoDir, pluginInstalledDir, {
+    const copied = await this.filesystem.copyDirectory(pluginRepoDir, stagingDir, {
       filter: async (source) => !(await fs.promises.lstat(source)).isSymbolicLink(),
     });
 
     if (!copied) {
-      await this.filesystem.removeDirectory(pluginInstalledDir);
+      await this.filesystem.removeDirectory(stagingDir);
       throw new Error(`Failed to copy plugin ${pluginUrn} from repo ${this.storeConfig.slug}`);
     }
+
+    const manifest = await this.getPluginInfoFromDirectory(pluginUrn, stagingDir).catch(() => null);
+
+    return { stagingDir, manifest };
+  }
+
+  public async discardStagedPlugin(stagingDir: string) {
+    await this.filesystem.removeDirectory(stagingDir);
+  }
+
+  /**
+   * Swap a staged copy in as the installed plugin. The previous installed copy is kept aside until `commit()`
+   * is called, and `rollback()` puts it back, so a failure after the swap (for example a database error) never
+   * leaves the installed files out of sync with the recorded version.
+   */
+  public async promoteStagedPlugin(pluginUrn: AppUrn, stagingDir: string) {
+    const { pluginInstalledDir } = this.getPluginPaths(pluginUrn);
+    const previousDir = `${stagingDir}.previous`;
+    const hadPrevious = await this.filesystem.pathExists(pluginInstalledDir);
+
+    if (hadPrevious && !(await this.filesystem.movePath(pluginInstalledDir, previousDir))) {
+      throw new Error(`Failed to set aside the installed files of plugin ${pluginUrn}`);
+    }
+
+    const restorePrevious = async () => {
+      await this.filesystem.removeDirectory(pluginInstalledDir);
+      if (hadPrevious && !(await this.filesystem.movePath(previousDir, pluginInstalledDir))) {
+        this.logger.error(`Failed to restore the previous files of plugin ${pluginUrn} from ${previousDir}`);
+      }
+    };
+
+    const promoted =
+      (await this.filesystem.createDirectory(path.dirname(pluginInstalledDir))) && (await this.filesystem.movePath(stagingDir, pluginInstalledDir));
+
+    if (!promoted) {
+      await restorePrevious();
+      await this.filesystem.removeDirectory(stagingDir);
+      throw new Error(`Failed to install the files of plugin ${pluginUrn}`);
+    }
+
+    return {
+      commit: async () => {
+        await this.filesystem.removeDirectory(previousDir);
+      },
+      rollback: restorePrevious,
+    };
   }
 
   public async removeInstalledPlugin(pluginUrn: AppUrn) {

@@ -6,14 +6,6 @@ export type PluginConfig = Record<string, string | number | boolean>;
 
 type ValidationResult = { success: true; config: PluginConfig } | { success: false; reason: string };
 
-type Options = {
-  /**
-   * Drop keys that are not declared by the settings instead of rejecting them.
-   * Used on update, where a new plugin version may have removed a setting.
-   */
-  dropUnknownKeys?: boolean;
-};
-
 const isEmpty = (value: unknown) => value === undefined || value === null || value === '';
 
 const generateRandom = (field: FormField) => {
@@ -89,14 +81,12 @@ const checkValue = (field: FormField, value: unknown): string | null => {
  * Validate plugin settings values against the form fields a plugin manifest declares.
  * Missing values fall back to the field default (or a generated value for `random` fields).
  */
-export const validatePluginConfig = (fields: FormField[], input: PluginConfig, options: Options = {}): ValidationResult => {
+export const validatePluginConfig = (fields: FormField[], input: PluginConfig): ValidationResult => {
   const declared = new Map(fields.map((field) => [field.env_variable, field]));
 
-  if (!options.dropUnknownKeys) {
-    const unknown = Object.keys(input).filter((key) => !declared.has(key));
-    if (unknown.length > 0) {
-      return { success: false, reason: `unknown setting ${unknown.join(', ')}` };
-    }
+  const unknown = Object.keys(input).filter((key) => !declared.has(key));
+  if (unknown.length > 0) {
+    return { success: false, reason: `unknown setting ${unknown.join(', ')}` };
   }
 
   const config: PluginConfig = {};

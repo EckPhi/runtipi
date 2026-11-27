@@ -12,7 +12,7 @@ import { createPluginInStore } from '@/tests/utils/create-plugin-in-store';
 import { AsyncMutex } from '@/utils/mutex/async-mutex';
 import type { AppUrn } from '@runtipi/common/types';
 import { fromPartial } from '@total-typescript/shoehorn';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { mock } from 'vitest-mock-extended';
 import type { PluginsRepository } from '../plugins.repository';
 import { PluginsService } from '../plugins.service';
@@ -150,6 +150,34 @@ describe('PluginsService', () => {
       expect(fs.existsSync(installedDir)).toBe(false);
     });
 
+    it('validates the copied files, not a catalog entry the repository replaced in the meantime', async () => {
+      const { service, repository, marketplace } = await setup({ version: '4.1.0' });
+      const stage = marketplace.stagePlugin.bind(marketplace);
+      vi.spyOn(marketplace, 'stagePlugin').mockImplementationOnce(async (urn) => {
+        // A store pull lands between the catalog lookup and the copy.
+        await createPluginInStore('store', { id: 'demo', version: '2.0.0', tipi_version: 2, min_tipi_version: '9.0.0', settings });
+        return stage(urn);
+      });
+
+      await expect(service.installPlugin(URN, { ENDPOINT: 'x' })).rejects.toMatchObject({ response: { message: 'PLUGIN_ERROR_MIN_TIPI_VERSION' } });
+      expect(repository.rows.size).toBe(0);
+      expect(fs.existsSync(installedDir)).toBe(false);
+    });
+
+    it('records the version of the files it copied', async () => {
+      const { service, repository, marketplace } = await setup();
+      const stage = marketplace.stagePlugin.bind(marketplace);
+      vi.spyOn(marketplace, 'stagePlugin').mockImplementationOnce(async (urn) => {
+        await createPluginInStore('store', { id: 'demo', version: '2.0.0', tipi_version: 2, settings });
+        return stage(urn);
+      });
+
+      await service.installPlugin(URN, { ENDPOINT: 'x' });
+
+      expect(repository.rows.get(URN)).toMatchObject({ installedVersion: '2.0.0', tipiVersion: 2 });
+      expect((await service.getInstalledPlugin(URN)).info).toMatchObject({ version: '2.0.0' });
+    });
+
     it('allows a compatible min_tipi_version', async () => {
       await createPluginInStore('store', { id: 'demo', min_tipi_version: '4.0.0', settings });
       const { service, repository } = await setup({ version: '4.1.0' });
@@ -242,6 +270,53 @@ describe('PluginsService', () => {
       });
 
       await expect(service.updatePlugin(URN)).rejects.toMatchObject({ response: { message: 'PLUGIN_ERROR_INVALID_CONFIG' } });
+    });
+
+    it('accepts values for settings a new version requires', async () => {
+      const { service, repository } = await setup();
+      await service.installPlugin(URN, { ENDPOINT: 'x' });
+      await createPluginInStore('store', {
+        id: 'demo',
+        version: '2.0.0',
+        tipi_version: 2,
+        settings: { global: [...settings.global, { type: 'text', label: 'Bucket', env_variable: 'BUCKET', required: true }], per_app: [] },
+      });
+
+      await expect(service.updatePlugin(URN, { BUCKET: 'backups', OTHER: 'x' })).rejects.toMatchObject({
+        response: { message: 'PLUGIN_ERROR_INVALID_CONFIG' },
+      });
+
+      await service.updatePlugin(URN, { BUCKET: 'backups' });
+
+      expect(repository.rows.get(URN)).toMatchObject({ tipiVersion: 2, globalConfig: { ENDPOINT: 'x', RETENTION: 7, BUCKET: 'backups' } });
+      expect((await service.getInstalledPlugin(URN)).info).toMatchObject({ version: '2.0.0' });
+    });
+
+    it('keeps the installed copy when copying the new version fails', async () => {
+      const { service, repository } = await setup();
+      await service.installPlugin(URN, { ENDPOINT: 'x' });
+      await createPluginInStore('store', { id: 'demo', version: '2.0.0', tipi_version: 2, settings });
+      const copy = vi.spyOn(FilesystemService.prototype, 'copyDirectory').mockResolvedValueOnce(false);
+      onTestFinished(() => copy.mockRestore());
+
+      await expect(service.updatePlugin(URN)).rejects.toMatchObject({ response: { message: 'PLUGIN_ERROR_INSTALL_FAILED' } });
+
+      expect(repository.rows.get(URN)).toMatchObject({ tipiVersion: 1, installedVersion: '1.0.0' });
+      expect((await service.getInstalledPlugin(URN)).info).toMatchObject({ version: '1.0.0' });
+      expect(fs.readdirSync(path.join(DATA_DIR, 'plugins', '.staging'))).toEqual([]);
+    });
+
+    it('restores the installed copy when saving the update fails', async () => {
+      const { service, repository } = await setup();
+      await service.installPlugin(URN, { ENDPOINT: 'x' });
+      await createPluginInStore('store', { id: 'demo', version: '2.0.0', tipi_version: 2, settings });
+      vi.spyOn(repository, 'updatePlugin').mockRejectedValueOnce(new Error('db down'));
+
+      await expect(service.updatePlugin(URN)).rejects.toThrow('db down');
+
+      expect(repository.rows.get(URN)).toMatchObject({ tipiVersion: 1 });
+      expect((await service.getInstalledPlugin(URN)).info).toMatchObject({ version: '1.0.0' });
+      expect(fs.readdirSync(path.join(DATA_DIR, 'plugins', '.staging'))).toEqual([]);
     });
 
     it('rejects updating a plugin that is not installed', async () => {

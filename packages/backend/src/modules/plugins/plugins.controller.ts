@@ -11,6 +11,7 @@ import {
   PluginSuccessDto,
   SearchPluginsDto,
   SearchPluginsQueryDto,
+  UpdatePluginBodyDto,
   UpdatePluginConfigBodyDto,
 } from './dto/plugins.dto';
 import { PluginsService } from './plugins.service';
@@ -71,8 +72,8 @@ export class PluginsController {
 
   @Post(':urn/update')
   @ApiResponse({ type: PluginSuccessDto })
-  async updatePlugin(@Param('urn') urn: string) {
-    await this.pluginsService.updatePlugin(parseUrn(urn));
+  async updatePlugin(@Param('urn') urn: string, @Body() body: UpdatePluginBodyDto) {
+    await this.pluginsService.updatePlugin(parseUrn(urn), body?.globalConfig ?? {});
 
     return PluginSuccessDto.parse({ success: true });
   }

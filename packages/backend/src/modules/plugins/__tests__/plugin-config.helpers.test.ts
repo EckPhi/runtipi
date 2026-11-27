@@ -40,10 +40,7 @@ describe('validatePluginConfig', () => {
     expect(validatePluginConfig([formField], { X: value }).success).toBe(false);
   });
 
-  it('drops unknown keys only when asked to', () => {
-    const fields = [field({ type: 'text', env_variable: 'A' })];
-
-    expect(validatePluginConfig(fields, { A: 'a', OLD: 'x' }).success).toBe(false);
-    expect(validatePluginConfig(fields, { A: 'a', OLD: 'x' }, { dropUnknownKeys: true })).toEqual({ success: true, config: { A: 'a' } });
+  it('rejects unknown keys', () => {
+    expect(validatePluginConfig([field({ type: 'text', env_variable: 'A' })], { A: 'a', OLD: 'x' }).success).toBe(false);
   });
 });

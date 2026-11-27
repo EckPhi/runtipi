@@ -38,8 +38,8 @@ export class PluginsService {
     }
   }
 
-  private validateGlobalConfig(urn: AppUrn, manifest: PluginManifest, input: PluginConfig, dropUnknownKeys = false) {
-    const result = validatePluginConfig(manifest.settings.global, input, { dropUnknownKeys });
+  private validateGlobalConfig(urn: AppUrn, manifest: PluginManifest, input: PluginConfig) {
+    const result = validatePluginConfig(manifest.settings.global, input);
 
     if (!result.success) {
       throw new TranslatableError('PLUGIN_ERROR_INVALID_CONFIG', { id: urn, reason: result.reason }, HttpStatus.BAD_REQUEST);
@@ -118,6 +118,63 @@ export class PluginsService {
     return this.toInstalledPlugin(await this.getInstalledOrThrow(urn));
   }
 
+  /**
+   * Copy the plugin out of the (mutable) store repository. Every check runs against the manifest of this copy, so a
+   * store pull between validation and installation cannot swap in different files.
+   */
+  private async stage(urn: AppUrn) {
+    try {
+      return await this.marketplace.stagePlugin(urn);
+    } catch (error) {
+      this.logger.error(`Failed to stage plugin ${urn}:`, error);
+      throw new TranslatableError('PLUGIN_ERROR_INSTALL_FAILED', { id: urn }, HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
+    }
+  }
+
+  /**
+   * Validate a staged copy, swap it in as the installed copy and persist the result. If anything fails the staged copy
+   * is discarded and the previously installed files are restored, so the files always match the recorded version.
+   */
+  private async installStaged<T>(
+    urn: AppUrn,
+    validate: (manifest: PluginManifest | null) => PluginManifest,
+    persist: (manifest: PluginManifest) => Promise<T>,
+  ) {
+    const { stagingDir, manifest: stagedManifest } = await this.stage(urn);
+
+    try {
+      const manifest = validate(stagedManifest);
+
+      let promotion: Awaited<ReturnType<MarketplaceService['promoteStagedPlugin']>>;
+      try {
+        promotion = await this.marketplace.promoteStagedPlugin(urn, stagingDir);
+      } catch (error) {
+        this.logger.error(`Failed to install the files of plugin ${urn}:`, error);
+        throw new TranslatableError('PLUGIN_ERROR_INSTALL_FAILED', { id: urn }, HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
+      }
+
+      try {
+        const result = await persist(manifest);
+        await promotion.commit();
+        return result;
+      } catch (error) {
+        await promotion.rollback();
+        throw error;
+      }
+    } finally {
+      // No-op once the staged copy has been promoted.
+      await this.marketplace.discardStagedPlugin(urn, stagingDir);
+    }
+  }
+
+  private assertInstallable(urn: AppUrn, manifest: PluginManifest | null) {
+    if (!manifest || !manifest.available || manifest.deprecated) {
+      throw new TranslatableError('PLUGIN_ERROR_NOT_AVAILABLE', { id: urn }, HttpStatus.BAD_REQUEST);
+    }
+
+    return manifest;
+  }
+
   public async installPlugin(urn: AppUrn, globalConfig: PluginConfig = {}) {
     return this.withLock(urn, async () => {
       if (await this.repository.getPluginByUrn(urn)) {
@@ -126,79 +183,90 @@ export class PluginsService {
 
       // Only plugins listed in the catalog (enabled store, available, not deprecated) can be installed.
       const available = await this.marketplace.getAvailablePlugins();
-      const manifest = available.find((plugin) => plugin.urn === urn);
 
-      if (!manifest) {
+      if (!available.some((plugin) => plugin.urn === urn)) {
         const exists = await this.getStoreManifest(urn);
         throw exists
           ? new TranslatableError('PLUGIN_ERROR_NOT_AVAILABLE', { id: urn }, HttpStatus.BAD_REQUEST)
           : new TranslatableError('PLUGIN_ERROR_NOT_FOUND', { id: urn }, HttpStatus.NOT_FOUND);
       }
 
-      this.assertCompatible(urn, manifest);
-      const config = this.validateGlobalConfig(urn, manifest, globalConfig);
-
-      try {
-        await this.marketplace.copyPluginFromRepoToInstalled(urn);
-      } catch (error) {
-        this.logger.error(`Failed to copy plugin ${urn}:`, error);
-        throw new TranslatableError('PLUGIN_ERROR_INSTALL_FAILED', { id: urn }, HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
-      }
-
       const { appName: pluginId, appStoreId } = extractAppUrn(urn);
+      let config: PluginConfig = {};
 
-      try {
-        const row = await this.repository.createPlugin({
-          urn,
-          pluginId,
-          pluginStoreSlug: appStoreId,
-          installedVersion: manifest.version,
-          tipiVersion: manifest.tipi_version,
-          enabled: true,
-          globalConfig: config,
-        });
+      return this.installStaged(
+        urn,
+        (staged) => {
+          const manifest = this.assertInstallable(urn, staged);
+          this.assertCompatible(urn, manifest);
+          config = this.validateGlobalConfig(urn, manifest, globalConfig);
+          return manifest;
+        },
+        async (manifest) => {
+          const row = await this.repository.createPlugin({
+            urn,
+            pluginId,
+            pluginStoreSlug: appStoreId,
+            installedVersion: manifest.version,
+            tipiVersion: manifest.tipi_version,
+            enabled: true,
+            globalConfig: config,
+          });
 
-        this.logger.info(`Plugin ${urn} installed (version ${manifest.version})`);
-        return row;
-      } catch (error) {
-        await this.marketplace.removeInstalledPlugin(urn).catch(() => undefined);
-        throw error;
-      }
+          this.logger.info(`Plugin ${urn} installed (version ${manifest.version})`);
+          return row;
+        },
+      );
     });
   }
 
-  public async updatePlugin(urn: AppUrn) {
+  /**
+   * Update an installed plugin to the version in its store.
+   * @param overrides - setting values to apply with the update, for example a setting the new version requires.
+   */
+  public async updatePlugin(urn: AppUrn, overrides: PluginConfig = {}) {
     return this.withLock(urn, async () => {
       const installed = await this.getInstalledOrThrow(urn);
-      const manifest = await this.getStoreManifest(urn);
+      const current = await this.getStoreManifest(urn);
 
-      if (!manifest || !manifest.available) {
+      if (!current) {
         throw new TranslatableError('PLUGIN_ERROR_NOT_FOUND', { id: urn }, HttpStatus.NOT_FOUND);
       }
 
-      if (manifest.tipi_version <= installed.tipiVersion) {
-        throw new TranslatableError('PLUGIN_ERROR_NO_UPDATE_AVAILABLE', { id: urn }, HttpStatus.BAD_REQUEST);
-      }
+      let config: PluginConfig = {};
 
-      this.assertCompatible(urn, manifest);
-      // Settings removed by the new version are dropped, new defaults are filled in and new required settings must already be satisfied.
-      const config = this.validateGlobalConfig(urn, manifest, installed.globalConfig, true);
+      return this.installStaged(
+        urn,
+        (staged) => {
+          if (!staged || !staged.available) {
+            throw new TranslatableError('PLUGIN_ERROR_NOT_AVAILABLE', { id: urn }, HttpStatus.BAD_REQUEST);
+          }
 
-      try {
-        await this.marketplace.copyPluginFromRepoToInstalled(urn);
-      } catch (error) {
-        this.logger.error(`Failed to copy plugin ${urn}:`, error);
-        throw new TranslatableError('PLUGIN_ERROR_INSTALL_FAILED', { id: urn }, HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
-      }
+          if (staged.tipi_version <= installed.tipiVersion) {
+            throw new TranslatableError('PLUGIN_ERROR_NO_UPDATE_AVAILABLE', { id: urn }, HttpStatus.BAD_REQUEST);
+          }
 
-      const row = await this.repository.updatePlugin(urn, {
-        installedVersion: manifest.version,
-        tipiVersion: manifest.tipi_version,
-        globalConfig: config,
-      });
+          this.assertCompatible(urn, staged);
 
-      this.logger.info(`Plugin ${urn} updated to version ${manifest.version}`);
-      return row;
+          // Settings removed by the new version are dropped, overrides are applied on top, and the result is checked
+          // against the target version (unknown overrides are rejected, new defaults are filled in).
+          const declared = new Set(staged.settings.global.map((field) => field.env_variable));
+          const carried = Object.fromEntries(Object.entries(installed.globalConfig).filter(([key]) => declared.has(key)));
+          config = this.validateGlobalConfig(urn, staged, { ...carried, ...overrides });
+
+          return staged;
+        },
+        async (manifest) => {
+          const row = await this.repository.updatePlugin(urn, {
+            installedVersion: manifest.version,
+            tipiVersion: manifest.tipi_version,
+            globalConfig: config,
+          });
+
+          this.logger.info(`Plugin ${urn} updated to version ${manifest.version}`);
+          return row;
+        },
+      );
     });
   }
 

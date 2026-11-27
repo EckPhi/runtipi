@@ -187,6 +187,19 @@ export class FilesystemService {
     }
   }
 
+  /**
+   * Rename a file or directory. Both paths must be on the same filesystem, which makes the move atomic.
+   */
+  async movePath(src: string, dest: string): Promise<boolean> {
+    try {
+      await fs.promises.rename(this.getSafeFilePath(src), this.getSafeFilePath(dest));
+      return true;
+    } catch (error) {
+      this.logger.error(`Error moving ${src} to ${dest}:`, error);
+      return false;
+    }
+  }
+
   async removeDirectory(dirPath: string): Promise<boolean> {
     try {
       await fs.promises.rm(this.getSafeFilePath(dirPath), { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });

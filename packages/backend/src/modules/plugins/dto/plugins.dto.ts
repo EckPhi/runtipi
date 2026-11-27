@@ -63,5 +63,6 @@ export class PluginDetailsDto extends createArkDto(pluginDetailsSchema, { name: 
 export class InstalledPluginDto extends createArkDto(installedPluginSchema, { name: 'InstalledPluginDto' }) {}
 export class InstalledPluginsDto extends createArkDto(installedPluginsSchema, { name: 'InstalledPluginsDto' }) {}
 export class InstallPluginBodyDto extends createArkDto(installPluginBodySchema, { name: 'InstallPluginBodyDto', input: true }) {}
+export class UpdatePluginBodyDto extends createArkDto(installPluginBodySchema, { name: 'UpdatePluginBodyDto', input: true }) {}
 export class UpdatePluginConfigBodyDto extends createArkDto(updatePluginConfigBodySchema, { name: 'UpdatePluginConfigBodyDto', input: true }) {}
 export class PluginSuccessDto extends createArkDto(successSchema, { name: 'PluginSuccessDto' }) {}

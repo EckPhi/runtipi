@@ -64,21 +64,54 @@ describe('AppStoreFilesManager plugins', () => {
     expect(await manager.getPluginInfoFromStore('empty:store' as AppUrn)).toBeNull();
   });
 
-  it('copies a plugin to the installed folder and removes it', async () => {
+  it('stages a copy, promotes it and removes it', async () => {
     await createPluginInStore('store', { id: 'demo' });
     const urn = 'demo:store' as AppUrn;
 
-    await manager.copyPluginFromRepoToInstalled(urn);
+    const { stagingDir, manifest } = await manager.stagePlugin(urn);
+    expect(manifest).toMatchObject({ id: 'demo', version: '1.0.0' });
+    expect(stagingDir.startsWith(path.join(DATA_DIR, 'plugins', '.staging'))).toBe(true);
+
+    const promotion = await manager.promoteStagedPlugin(urn, stagingDir);
+    await promotion.commit();
 
     expect(manager.getPluginPaths(urn).pluginInstalledDir).toBe(path.join(DATA_DIR, 'plugins', 'store', 'demo'));
     expect(await manager.getInstalledPluginInfo(urn)).toMatchObject({ id: 'demo', version: '1.0.0' });
+    expect(fs.existsSync(stagingDir)).toBe(false);
+    expect(fs.existsSync(`${stagingDir}.previous`)).toBe(false);
 
     await manager.removeInstalledPlugin(urn);
 
     expect(fs.existsSync(path.join(DATA_DIR, 'plugins', 'store', 'demo'))).toBe(false);
   });
 
-  it('refuses to copy a plugin that is not in the repository', async () => {
-    await expect(manager.copyPluginFromRepoToInstalled('missing:store' as AppUrn)).rejects.toThrow('not found');
+  it('reads the staged manifest, not a later repository change', async () => {
+    await createPluginInStore('store', { id: 'demo', version: '1.0.0' });
+    const urn = 'demo:store' as AppUrn;
+
+    const { stagingDir, manifest } = await manager.stagePlugin(urn);
+    await createPluginInStore('store', { id: 'demo', version: '2.0.0', tipi_version: 2 });
+    await (await manager.promoteStagedPlugin(urn, stagingDir)).commit();
+
+    expect(manifest?.version).toBe('1.0.0');
+    expect((await manager.getInstalledPluginInfo(urn))?.version).toBe('1.0.0');
+  });
+
+  it('restores the previous installed copy on rollback', async () => {
+    const urn = 'demo:store' as AppUrn;
+    await createPluginInStore('store', { id: 'demo', version: '1.0.0' });
+    await (await manager.promoteStagedPlugin(urn, (await manager.stagePlugin(urn)).stagingDir)).commit();
+
+    await createPluginInStore('store', { id: 'demo', version: '2.0.0', tipi_version: 2 });
+    const promotion = await manager.promoteStagedPlugin(urn, (await manager.stagePlugin(urn)).stagingDir);
+    expect((await manager.getInstalledPluginInfo(urn))?.version).toBe('2.0.0');
+
+    await promotion.rollback();
+
+    expect((await manager.getInstalledPluginInfo(urn))?.version).toBe('1.0.0');
+  });
+
+  it('refuses to stage a plugin that is not in the repository', async () => {
+    await expect(manager.stagePlugin('missing:store' as AppUrn)).rejects.toThrow('not found');
   });
 });

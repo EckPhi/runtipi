@@ -2660,6 +2660,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePluginBodyDto"
+              }
+            }
+          }
+        },
         "responses": {
           "default": {
             "description": "",
@@ -7960,6 +7970,27 @@
         "required": [
           "globalConfig"
         ]
+      },
+      "UpdatePluginBodyDto": {
+        "type": "object",
+        "properties": {
+          "globalConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          }
+        }
       }
     }
   }

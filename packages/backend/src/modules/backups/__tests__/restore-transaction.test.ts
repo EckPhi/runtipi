@@ -37,7 +37,10 @@ const setup = async (phase: RestorePhase, destinationExisted = true) => {
   repository.getRestoreJournal.mockImplementation(async () => state.journal);
   repository.finishRestore.mockImplementation(async (_appUrn, ledger, nextPhase) => {
     state.ledger = ledger;
-    if (state.journal) state.journal.phase = nextPhase;
+    if (state.journal) {
+      state.journal.phase = nextPhase;
+      if (nextPhase === 'hooks-pending') state.journal.targetState = ledger;
+    }
   });
   repository.clearRestoreJournal.mockImplementation(async () => {
     state.journal = undefined;
@@ -256,6 +259,7 @@ test.each([0, 1, 3])('preserves a pending hook after replacement crashes with %i
   }
   await transaction.reconcile({ pendingHook: 'defer' });
   expect(state.journal?.phase).toBe('hooks-pending');
+  expect(state.journal?.targetState).toEqual(previousState);
   expect(state.ledger).toEqual(previousState);
   for (const directory of directories) {
     expect(await fs.promises.readFile(path.join(directory.destination, 'state'), 'utf8')).toBe('previous');
@@ -264,4 +268,21 @@ test.each([0, 1, 3])('preserves a pending hook after replacement crashes with %i
   // No callback is installed in this fixture: lifecycle work must still refuse to proceed.
   await expect(transaction.reconcile()).rejects.toThrow('Pending restore hook');
   expect(state.journal?.phase).toBe('hooks-pending');
+});
+
+test('commits the previous ledger after retrying a rolled-back replacement hook', async () => {
+  const { directories, state, repository, filesystem, logger } = await setup('prepared-hook-pending');
+  const hook = vi.fn(async () => undefined);
+  const transaction = new RestoreTransaction(
+    appUrn,
+    directories.map((directory) => directory.destination),
+    filesystem,
+    repository,
+    logger,
+    hook,
+  );
+  await transaction.reconcile();
+  expect(hook).toHaveBeenCalledOnce();
+  expect(state.ledger).toEqual(previousState);
+  expect(state.journal).toBeUndefined();
 });

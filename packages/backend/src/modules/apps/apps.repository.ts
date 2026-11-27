@@ -165,7 +165,10 @@ export class AppsRepository {
         .update(app)
         .set({ migrationsBaselined: state.initialized, ...recovery })
         .where(eq(app.id, installedApp.id));
-      await tx.update(appRestoreJournal).set({ phase }).where(eq(appRestoreJournal.appId, installedApp.id));
+      await tx
+        .update(appRestoreJournal)
+        .set({ phase, ...(phase === 'hooks-pending' ? { targetState: state } : {}) })
+        .where(eq(appRestoreJournal.appId, installedApp.id));
     });
   }
 

@@ -13,7 +13,7 @@ import { backupStep, requireFilesystemSuccess, runBackupEffect } from './backup-
 const ledgerSchema = type({ initialized: 'boolean', migrationIds: 'string[]' });
 const directorySchema = type({ destination: 'string', staged: 'string', original: 'string', destinationExisted: 'boolean' });
 const journalSchema = type({
-  phase: "'prepared' | 'recovered' | 'committed' | 'hooks-pending'",
+  phase: "'prepared' | 'prepared-hook-pending' | 'recovered' | 'committed' | 'hooks-pending'",
   previousState: ledgerSchema,
   targetState: ledgerSchema,
   directories: directorySchema.array(),
@@ -72,7 +72,7 @@ export class RestoreTransaction {
 
     await runBackupEffect(
       backupStep(() => this.swapRestoredDirectories(directories)).pipe(
-        Effect.onError(() => backupStep(() => this.recover(previousState, directories)).pipe(Effect.orDie)),
+        Effect.onError(() => backupStep(() => this.recover(previousState, directories, !!pending)).pipe(Effect.orDie)),
       ),
     );
 
@@ -94,8 +94,10 @@ export class RestoreTransaction {
     }
 
     const journal = await this.validateJournal(stored);
-    if (journal.phase === 'prepared') {
-      await this.recover(journal.previousState, journal.directories);
+    if (journal.phase === 'prepared' || journal.phase === 'prepared-hook-pending') {
+      const pending = journal.phase === 'prepared-hook-pending';
+      await this.recover(journal.previousState, journal.directories, pending);
+      if (pending) await this.reconcile(options);
       return;
     }
 
@@ -120,8 +122,18 @@ export class RestoreTransaction {
     await this.appsRepository.finishRestore(this.appUrn, state, 'committed');
   }
 
-  private async recover(previousState: MigrationLedgerState, directories: RestoreDirectory[]) {
+  private async recover(previousState: MigrationLedgerState, directories: RestoreDirectory[], pendingHook = false) {
     await this.rollbackRestoredDirectories(directories);
+    if (pendingHook) {
+      // Keep the prepared marker until rollback and staging cleanup are both durable.
+      // A retry can repeat rollback safely, then restore the previous hook obligation.
+      for (const directory of directories) {
+        await this.assertSafeRestoreDirectory(directory);
+        await requireFilesystemSuccess(this.filesystem.removeDirectory(directory.staged), 'Failed to remove replacement restore staging');
+      }
+      await this.appsRepository.finishRestore(this.appUrn, previousState, 'hooks-pending');
+      return;
+    }
     await this.appsRepository.finishRestore(this.appUrn, previousState, 'recovered');
     await this.cleanup(directories, 'staged');
   }

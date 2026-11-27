@@ -51,7 +51,7 @@ const setup = async (backup?: unknown) => {
     journal = undefined;
   });
   repository.replaceRestoreJournal.mockImplementation(async (_urn, previousState, targetState, directories) => {
-    journal = fromPartial({ phase: 'prepared', previousState, targetState, directories });
+    journal = fromPartial({ phase: 'prepared-hook-pending', previousState, targetState, directories });
   });
   const docker = mock<DockerService>();
   docker.getEffectiveMigrationServices.mockResolvedValue({ migration: { image: 'sqlite:latest' } });
@@ -312,4 +312,31 @@ test('a pending restore hook blocks lifecycle work but can be replaced by anothe
   expect(await fs.promises.readFile(path.join(appDataDir, 'recovered'), 'utf8')).toBe('imported');
   expect(await repository.getRestoreJournal(appUrn)).toBeUndefined();
   expect((await fs.promises.readdir(appDataDir)).filter((name) => name.includes('.restore-'))).toEqual([]);
+});
+
+test('keeps the previous hook pending when replacement file installation fails', async () => {
+  const { manager, hook, docker, appDataDir, repository } = await setup({ include: ['dump.sql'] });
+  await hook('restore');
+  const filename = await manager.createBackup(appUrn);
+  docker.composeMigration.mockRejectedValue(new Error('hook still required'));
+  await expect(manager.restoreApp(appUrn, filename, { allowPartial: true })).rejects.toThrow();
+  await fs.promises.writeFile(path.join(appDataDir, 'dump.sql'), 'previous pending data');
+  const rename = fs.promises.rename.bind(fs.promises);
+  let failed = false;
+  const spy = vi.spyOn(fs.promises, 'rename').mockImplementation(async (source, destination) => {
+    if (!failed && String(source).includes('.dump.sql.restore-') && !String(source).endsWith('.previous')) {
+      failed = true;
+      throw new Error('replacement install failed');
+    }
+    return rename(source, destination);
+  });
+  try {
+    await expect(manager.restoreApp(appUrn, filename, { allowPartial: true })).rejects.toThrow('replacement install failed');
+  } finally {
+    spy.mockRestore();
+  }
+  expect(failed).toBe(true);
+  expect(await fs.promises.readFile(path.join(appDataDir, 'dump.sql'), 'utf8')).toBe('previous pending data');
+  expect((await repository.getRestoreJournal(appUrn))?.phase).toBe('hooks-pending');
+  await expect(manager.reconcileRestore(appUrn)).rejects.toThrow('hook still required');
 });

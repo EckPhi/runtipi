@@ -246,3 +246,22 @@ test('rolls back selected files after an interrupted multi-path partial restore'
   expect(await fs.promises.readFile(path.join(root, 'state'), 'utf8')).toBe('previous');
   expect(state.journal).toBeUndefined();
 });
+
+test.each([0, 1, 3])('preserves a pending hook after replacement crashes with %i swaps', async (swaps) => {
+  const { transaction, directories, state } = await setup('prepared');
+  state.journal!.phase = 'prepared-hook-pending' as RestorePhase;
+  for (const directory of directories.slice(0, swaps)) {
+    await fs.promises.rename(directory.destination, directory.original);
+    await fs.promises.rename(directory.staged, directory.destination);
+  }
+  await transaction.reconcile({ pendingHook: 'defer' });
+  expect(state.journal?.phase).toBe('hooks-pending');
+  expect(state.ledger).toEqual(previousState);
+  for (const directory of directories) {
+    expect(await fs.promises.readFile(path.join(directory.destination, 'state'), 'utf8')).toBe('previous');
+    await expect(fs.promises.access(directory.staged)).rejects.toThrow();
+  }
+  // No callback is installed in this fixture: lifecycle work must still refuse to proceed.
+  await expect(transaction.reconcile()).rejects.toThrow('Pending restore hook');
+  expect(state.journal?.phase).toBe('hooks-pending');
+});

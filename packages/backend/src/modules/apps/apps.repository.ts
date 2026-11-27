@@ -213,7 +213,7 @@ export class AppsRepository {
         .where(and(eq(appRestoreJournal.appId, installedApp.id), eq(appRestoreJournal.phase, 'hooks-pending')))
         .returning({ appId: appRestoreJournal.appId });
       if (deleted.length !== 1) throw new Error(`No pending restore hook to replace for ${appUrn}`);
-      await tx.insert(appRestoreJournal).values({ appId: installedApp.id, previousState, targetState, directories });
+      await tx.insert(appRestoreJournal).values({ appId: installedApp.id, previousState, targetState, directories, phase: 'prepared-hook-pending' });
     });
   }
 

@@ -284,6 +284,10 @@ export class BackupManager implements OnModuleInit {
   public async restoreApp(appUrn: AppUrn, filename: string, options?: { allowPartial: boolean }): Promise<MigrationBackupState | null> {
     // A new restore replaces data that is still waiting on its restore hook.
     await this.reconcileRestore(appUrn, { pendingHook: 'defer' });
+    if ((await this.appsRepository.getRestoreJournal(appUrn))?.phase === 'hooks-pending') {
+      // A hook container can outlive the backend. Stop it before staging or swapping live paths.
+      await this.docker.stopAppMigrations(appUrn);
+    }
     const manager = this;
 
     return runBackupEffect(

@@ -340,3 +340,41 @@ test('keeps the previous hook pending when replacement file installation fails',
   expect((await repository.getRestoreJournal(appUrn))?.phase).toBe('hooks-pending');
   await expect(manager.reconcileRestore(appUrn)).rejects.toThrow('hook still required');
 });
+
+test('stops a surviving hook writer before replacement restore swaps data', async () => {
+  const { manager, hook, docker, appDataDir } = await setup({ include: ['dump.sql'] });
+  await hook('restore');
+  const filename = await manager.createBackup(appUrn);
+  docker.composeMigration.mockRejectedValue(new Error('backend interrupted'));
+  await expect(manager.restoreApp(appUrn, filename, { allowPartial: true })).rejects.toThrow();
+  let writerRunning = true;
+  docker.stopAppMigrations.mockImplementation(async () => {
+    writerRunning = false;
+  });
+  docker.composeMigration.mockResolvedValue({ success: true, stdout: '', stderr: '' });
+  const rename = fs.promises.rename.bind(fs.promises);
+  const spy = vi.spyOn(fs.promises, 'rename').mockImplementation(async (source, destination) => {
+    if (String(destination).includes('.previous')) expect(writerRunning).toBe(false);
+    return rename(source, destination);
+  });
+  try {
+    await manager.restoreApp(appUrn, filename, { allowPartial: true });
+  } finally {
+    spy.mockRestore();
+  }
+  expect(await fs.promises.readFile(path.join(appDataDir, 'dump.sql'), 'utf8')).toBe('saved dump');
+});
+
+test('leaves the pending journal and files alone if surviving hook cleanup fails', async () => {
+  const { manager, hook, docker, appDataDir, repository } = await setup({ include: ['dump.sql'] });
+  await hook('restore');
+  const filename = await manager.createBackup(appUrn);
+  docker.composeMigration.mockRejectedValue(new Error('hook failed'));
+  await expect(manager.restoreApp(appUrn, filename, { allowPartial: true })).rejects.toThrow();
+  const pending = await repository.getRestoreJournal(appUrn);
+  await fs.promises.writeFile(path.join(appDataDir, 'dump.sql'), 'pending data');
+  docker.stopAppMigrations.mockRejectedValue(new Error('cannot stop surviving hook'));
+  await expect(manager.restoreApp(appUrn, filename, { allowPartial: true })).rejects.toThrow('cannot stop surviving hook');
+  expect(await repository.getRestoreJournal(appUrn)).toEqual(pending);
+  expect(await fs.promises.readFile(path.join(appDataDir, 'dump.sql'), 'utf8')).toBe('pending data');
+});

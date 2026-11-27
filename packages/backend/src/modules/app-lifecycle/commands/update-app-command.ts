@@ -139,7 +139,7 @@ export class UpdateAppCommand extends AppLifecycleCommand {
 
       if (hasPendingMigrations) {
         deploymentMayHaveStopped = true;
-        const backupFilename = await backupManager.createBackup(appUrn, false, this.context);
+        const backupFilename = await backupManager.createBackup(appUrn, false, this.context, { mode: 'full' });
         migrationBackupFilename = backupFilename;
         migrationRecoveryRequired = true;
         await appMigrationService.beginMigrationBatch(appUrn, backupFilename, pendingMigrations);

@@ -56,7 +56,7 @@ export type RestoreDirectory = {
   destinationExisted: boolean;
 };
 
-export type RestorePhase = 'prepared' | 'recovered' | 'committed';
+export type RestorePhase = 'prepared' | 'prepared-hook-pending' | 'recovered' | 'committed' | 'hooks-pending';
 
 export type MigrationRecovery = {
   backupFilename: string;

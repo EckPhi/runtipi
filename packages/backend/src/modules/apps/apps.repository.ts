@@ -148,7 +148,7 @@ export class AppsRepository {
     });
   }
 
-  public async finishRestore(appUrn: AppUrn, state: MigrationLedgerState, phase: 'recovered' | 'committed') {
+  public async finishRestore(appUrn: AppUrn, state: MigrationLedgerState, phase: 'recovered' | 'committed' | 'hooks-pending') {
     const installedApp = await this.getAppByUrn(appUrn);
     if (!installedApp) {
       throw new Error(`App ${appUrn} is not installed`);
@@ -165,7 +165,10 @@ export class AppsRepository {
         .update(app)
         .set({ migrationsBaselined: state.initialized, ...recovery })
         .where(eq(app.id, installedApp.id));
-      await tx.update(appRestoreJournal).set({ phase }).where(eq(appRestoreJournal.appId, installedApp.id));
+      await tx
+        .update(appRestoreJournal)
+        .set({ phase, ...(phase === 'hooks-pending' ? { targetState: state } : {}) })
+        .where(eq(appRestoreJournal.appId, installedApp.id));
     });
   }
 
@@ -192,6 +195,29 @@ export class AppsRepository {
     }
 
     await this.db.insert(appRestoreJournal).values({ appId: installedApp.id, previousState, targetState, directories });
+  }
+
+  // Swap a restore waiting on its hook for a new restore in one transaction, so the pending hook is never lost early.
+  public async replaceRestoreJournal(
+    appUrn: AppUrn,
+    previousState: MigrationLedgerState,
+    targetState: MigrationLedgerState,
+    directories: RestoreDirectory[],
+  ) {
+    const installedApp = await this.getAppByUrn(appUrn);
+
+    if (!installedApp) {
+      throw new Error(`App ${appUrn} is not installed`);
+    }
+
+    await this.db.transaction(async (tx) => {
+      const deleted = await tx
+        .delete(appRestoreJournal)
+        .where(and(eq(appRestoreJournal.appId, installedApp.id), eq(appRestoreJournal.phase, 'hooks-pending')))
+        .returning({ appId: appRestoreJournal.appId });
+      if (deleted.length !== 1) throw new Error(`No pending restore hook to replace for ${appUrn}`);
+      await tx.insert(appRestoreJournal).values({ appId: installedApp.id, previousState, targetState, directories, phase: 'prepared-hook-pending' });
+    });
   }
 
   public async clearRestoreJournal(appUrn: AppUrn) {

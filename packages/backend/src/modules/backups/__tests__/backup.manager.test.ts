@@ -43,6 +43,8 @@ const setup = async () => {
 
   config.get.calledWith('directories').mockReturnValue(fromPartial({ dataDir: '/data' }));
   appFiles.getAppPaths.mockReturnValue({ appDataDir, appInstalledDir });
+  appFiles.getAppBackupPolicy.mockResolvedValue({ stop: true });
+  appFiles.getAppBackupHook.mockResolvedValue(null);
   apps.getMigrationState.mockResolvedValue({ initialized: false, migrationIds: [] });
   apps.getAppByUrn.mockResolvedValue(fromPartial({ maxBackups: 0 }));
   docker.composeApp.mockResolvedValue({ success: true, stdout: '', stderr: '' });

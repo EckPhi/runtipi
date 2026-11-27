@@ -93,3 +93,15 @@ test('cascades migration and restore records when an app is removed', async () =
   expect(await db.select().from(appRestoreJournal).where(eq(appRestoreJournal.appId, app.id))).toEqual([]);
   expect(await db.select().from(appTable).where(eq(appTable.id, app.id))).toEqual([]);
 });
+
+test('resets the pending hook target ledger when a replacement rolls back', async () => {
+  await repository.createRestoreJournal(appUrn, previousState, previousState, []);
+  await repository.finishRestore(appUrn, previousState, 'hooks-pending');
+  await repository.replaceRestoreJournal(appUrn, previousState, targetState, []);
+  expect((await repository.getRestoreJournal(appUrn))?.phase).toBe('prepared-hook-pending');
+  await repository.finishRestore(appUrn, previousState, 'hooks-pending');
+  const pending = await repository.getRestoreJournal(appUrn);
+  expect(pending?.targetState).toEqual(previousState);
+  await repository.finishRestore(appUrn, pending!.targetState, 'committed');
+  expect(await repository.getMigrationState(appUrn)).toEqual(previousState);
+});

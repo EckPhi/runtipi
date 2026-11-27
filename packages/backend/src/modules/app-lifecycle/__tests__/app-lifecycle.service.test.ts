@@ -55,5 +55,6 @@ test('backup deletion waits for the app lock and reconciles recovery before dele
   release();
   await deletion;
 
+  expect(migrations.reconcile).toHaveBeenCalledWith(appUrn, { pendingHook: 'defer' });
   expect(backupManager.deleteBackup).toHaveBeenCalledWith(appUrn, 'migration-rollback.tar.gz');
 });

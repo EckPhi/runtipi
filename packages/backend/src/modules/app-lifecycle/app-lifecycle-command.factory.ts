@@ -37,7 +37,8 @@ export class AppLifecycleCommandFactory {
       if (!context) this.jobs.assertIdle(eventData.appUrn);
 
       try {
-        await this.migrations.reconcile(eventData.appUrn);
+        // A restore replaces data still waiting on its restore hook; everything else needs the hook to finish first.
+        await this.migrations.reconcile(eventData.appUrn, { pendingHook: eventData.command === 'restore' ? 'defer' : 'run' });
       } catch (error) {
         if (eventData.command !== 'uninstall') throw error;
 

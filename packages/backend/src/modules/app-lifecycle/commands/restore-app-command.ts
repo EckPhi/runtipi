@@ -34,7 +34,7 @@ export class RestoreAppCommand extends AppLifecycleCommand {
       }
       appStopped = true;
 
-      await backupManager.restoreApp(appUrn, this.filename);
+      await backupManager.restoreApp(appUrn, this.filename, { allowPartial: true });
 
       logger.info(`App ${appUrn} restored!`);
       return { success: true, message: `App ${appUrn} restored successfully`, appStopped };

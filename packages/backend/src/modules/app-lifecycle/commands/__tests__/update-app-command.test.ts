@@ -534,7 +534,7 @@ test('backs up and runs pending app migrations before starting the target deploy
   const result = await command.execute(appUrn, {});
 
   expect(result).toEqual({ success: true, message: `App ${appUrn} updated successfully` });
-  expect(backupManager.createBackup).toHaveBeenCalledWith(appUrn, false, undefined);
+  expect(backupManager.createBackup).toHaveBeenCalledWith(appUrn, false, undefined, { mode: 'full' });
   expect(appMigrationService.runMigrations).toHaveBeenCalledWith(appUrn, [{ id: 'database-v2', path: '/data/apps/test/migrations/database-v2.yml' }]);
   expect(appMigrationService.commitMigrations).toHaveBeenCalledWith(
     appUrn,

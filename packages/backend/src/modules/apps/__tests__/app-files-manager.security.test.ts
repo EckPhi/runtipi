@@ -57,6 +57,27 @@ describe('AppFilesManager file security', () => {
     manager = new AppFilesManager(configuration, filesystem, loggerService);
   });
 
+  it('reads backup defaults without silently accepting an invalid policy', async () => {
+    const configPath = path.join(DATA_DIR, 'apps', 'evil', 'demo', 'config.json');
+    await writeFile(configPath, JSON.stringify({ backup: {} }));
+    await expect(manager.getAppBackupPolicy('demo:evil' as AppUrn)).resolves.toEqual({ stop: true });
+    await writeFile(configPath, JSON.stringify({ backup: { stop: 'false' } }));
+    await expect(manager.getAppBackupPolicy('demo:evil' as AppUrn)).rejects.toThrow();
+    await writeFile(configPath, JSON.stringify({ backup: null }));
+    await expect(manager.getAppBackupPolicy('demo:evil' as AppUrn)).rejects.toThrow();
+  });
+
+  it('discovers only regular backup hook files', async () => {
+    const appUrn = 'demo:evil' as AppUrn;
+    await expect(manager.getAppBackupHook(appUrn, 'backup')).resolves.toBeNull();
+    const hookPath = path.join(DATA_DIR, 'apps', 'evil', 'demo', 'backup', 'backup.yml');
+    await writeFile(hookPath, 'services: {}');
+    await expect(manager.getAppBackupHook(appUrn, 'backup')).resolves.toEqual({ id: 'backup', path: hookPath });
+    await fs.promises.unlink(hookPath);
+    await fs.promises.symlink(path.join(DATA_DIR, '.env'), hookPath);
+    await expect(manager.getAppBackupHook(appUrn, 'backup')).rejects.toThrow();
+  });
+
   it('does not expose installed app description symlink targets', async () => {
     await writeFile(path.join(DATA_DIR, 'apps', 'evil', 'demo', 'config.json'), JSON.stringify(validAppConfig));
 

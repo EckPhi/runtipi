@@ -7,15 +7,16 @@ import type { AppsRepository } from '@/modules/apps/apps.repository';
 import type { AppUrn } from '@runtipi/common/types';
 import { type } from 'arktype';
 import { Effect } from 'effect';
+import { normalizeBackupIncludes } from './backup-policy';
 import { backupStep, requireFilesystemSuccess, runBackupEffect } from './backup-resources';
 
 const ledgerSchema = type({ initialized: 'boolean', migrationIds: 'string[]' });
 const directorySchema = type({ destination: 'string', staged: 'string', original: 'string', destinationExisted: 'boolean' });
 const journalSchema = type({
-  phase: "'prepared' | 'recovered' | 'committed'",
+  phase: "'prepared' | 'prepared-hook-pending' | 'recovered' | 'committed' | 'hooks-pending'",
   previousState: ledgerSchema,
   targetState: ledgerSchema,
-  directories: directorySchema.array().exactlyLength(3),
+  directories: directorySchema.array(),
 });
 
 type RestoreSource = { source: string | null; destination: string; error: string };
@@ -28,18 +29,34 @@ export class RestoreTransaction {
     private readonly filesystem: FilesystemService,
     private readonly appsRepository: AppsRepository,
     private readonly logger: LoggerService,
+    private readonly restoreHook?: () => Promise<void>,
   ) {}
 
-  async restore(sources: RestoreSource[], targetState: MigrationLedgerState) {
+  async restore(sources: RestoreSource[], targetState: MigrationLedgerState, runHook = false) {
+    const pending = await this.getPendingHookJournal();
     const previousState = await this.appsRepository.getMigrationState(this.appUrn);
     const directories = await this.stageRestoredDirectories(sources);
 
     try {
-      await this.appsRepository.createRestoreJournal(this.appUrn, previousState, targetState, directories);
+      if (pending) {
+        // A committed restore's previous copies are never needed again; the journal swap keeps the pending hook until it is replaced.
+        this.logger.warn(`Replacing the pending restore hook for ${this.appUrn} with a new restore`);
+        for (const directory of pending.directories) {
+          await this.assertSafeRestoreDirectory(directory);
+          await requireFilesystemSuccess(
+            this.filesystem.removeDirectory(directory.original),
+            `Failed to remove restore directory ${directory.original}`,
+          );
+        }
+        await this.appsRepository.replaceRestoreJournal(this.appUrn, previousState, targetState, directories);
+      } else {
+        await this.appsRepository.createRestoreJournal(this.appUrn, previousState, targetState, directories);
+      }
     } catch (error) {
       try {
         const journal = await this.appsRepository.getRestoreJournal(this.appUrn);
-        if (!journal) {
+        const ours = journal?.directories.some((stored) => directories.some((directory) => directory.staged === stored.staged));
+        if (!ours) {
           for (const directory of directories) {
             await this.filesystem.removeDirectory(directory.staged).catch((cleanupError) => {
               this.logger.warn(`Failed to remove restore staging ${directory.staged}`, cleanupError);
@@ -55,37 +72,68 @@ export class RestoreTransaction {
 
     await runBackupEffect(
       backupStep(() => this.swapRestoredDirectories(directories)).pipe(
-        Effect.onError(() => backupStep(() => this.recover(previousState, directories)).pipe(Effect.orDie)),
+        Effect.onError(() => backupStep(() => this.recover(previousState, directories, !!pending)).pipe(Effect.orDie)),
       ),
     );
 
     // The ledger and the commit decision must survive a lost database response together.
     await runBackupEffect(
-      backupStep(() => this.appsRepository.finishRestore(this.appUrn, targetState, 'committed')).pipe(
+      backupStep(() => this.appsRepository.finishRestore(this.appUrn, targetState, runHook ? 'hooks-pending' : 'committed')).pipe(
         Effect.onError(() => backupStep(() => this.reconcile()).pipe(Effect.orDie)),
       ),
     );
+    if (runHook) await this.finishHook(targetState);
     await this.cleanup(directories, 'original');
   }
 
-  async reconcile() {
+  // 'defer' leaves a restore waiting on its hook in place, for work that does not depend on the restored data.
+  async reconcile(options: { pendingHook?: 'run' | 'defer' } = {}) {
     const stored = await this.appsRepository.getRestoreJournal(this.appUrn);
     if (!stored) {
       return;
     }
 
     const journal = await this.validateJournal(stored);
-    if (journal.phase === 'prepared') {
-      await this.recover(journal.previousState, journal.directories);
+    if (journal.phase === 'prepared' || journal.phase === 'prepared-hook-pending') {
+      const pending = journal.phase === 'prepared-hook-pending';
+      await this.recover(journal.previousState, journal.directories, pending);
+      if (pending) await this.reconcile(options);
       return;
     }
 
-    const directoryKind = journal.phase === 'committed' ? 'original' : 'staged';
+    if (journal.phase === 'hooks-pending') {
+      if (options.pendingHook === 'defer') return;
+      await this.finishHook(journal.targetState);
+    }
+    const directoryKind = journal.phase === 'recovered' ? 'staged' : 'original';
     await this.cleanup(journal.directories, directoryKind);
   }
 
-  private async recover(previousState: MigrationLedgerState, directories: RestoreDirectory[]) {
+  private async getPendingHookJournal() {
+    // Other unfinished journals are reconciled before a restore; inserting a new journal still refuses them.
+    const stored = await this.appsRepository.getRestoreJournal(this.appUrn);
+    if (stored?.phase !== 'hooks-pending') return null;
+    return this.validateJournal(stored);
+  }
+
+  private async finishHook(state: MigrationLedgerState) {
+    if (!this.restoreHook) throw new Error('Pending restore hook cannot be recovered');
+    await this.restoreHook();
+    await this.appsRepository.finishRestore(this.appUrn, state, 'committed');
+  }
+
+  private async recover(previousState: MigrationLedgerState, directories: RestoreDirectory[], pendingHook = false) {
     await this.rollbackRestoredDirectories(directories);
+    if (pendingHook) {
+      // Keep the prepared marker until rollback and staging cleanup are both durable.
+      // A retry can repeat rollback safely, then restore the previous hook obligation.
+      for (const directory of directories) {
+        await this.assertSafeRestoreDirectory(directory);
+        await requireFilesystemSuccess(this.filesystem.removeDirectory(directory.staged), 'Failed to remove replacement restore staging');
+      }
+      await this.appsRepository.finishRestore(this.appUrn, previousState, 'hooks-pending');
+      return;
+    }
     await this.appsRepository.finishRestore(this.appUrn, previousState, 'recovered');
     await this.cleanup(directories, 'staged');
   }
@@ -120,11 +168,8 @@ export class RestoreTransaction {
 
     const destinations = new Set(journal.directories.map((directory) => directory.destination));
     const paths = journal.directories.flatMap((directory) => [directory.destination, directory.staged, directory.original]);
-    if (
-      destinations.size !== this.destinations.length ||
-      this.destinations.some((destination) => !destinations.has(destination)) ||
-      new Set(paths).size !== paths.length
-    ) {
+    const full = destinations.size === this.destinations.length && this.destinations.every((destination) => destinations.has(destination));
+    if (!(full || this.arePartialDestinations([...destinations])) || new Set(paths).size !== paths.length) {
       throw new Error('Restore journal directories are invalid');
     }
 
@@ -135,12 +180,26 @@ export class RestoreTransaction {
     return journal;
   }
 
+  private arePartialDestinations(destinations: string[]) {
+    const root = this.destinations[0];
+    if (!root) return false;
+    const relative = destinations.map((destination) => path.relative(root, destination) || '.');
+    try {
+      return (
+        destinations.every((destination) => path.isAbsolute(destination) && path.resolve(destination) === destination) &&
+        normalizeBackupIncludes(relative).length === relative.length
+      );
+    } catch {
+      return false;
+    }
+  }
+
   private async assertSafeRestoreDirectory(directory: RestoreDirectory) {
     const { destination, staged, original } = directory;
     const prefix = `.${path.basename(destination)}.restore-`;
     const suffix = path.basename(staged).slice(prefix.length);
     if (
-      !this.destinations.includes(destination) ||
+      !(this.destinations.includes(destination) || this.arePartialDestinations([destination])) ||
       !path.basename(staged).startsWith(prefix) ||
       !/^[A-Za-z0-9]{6}$/.test(suffix) ||
       path.dirname(staged) !== path.dirname(destination) ||
@@ -210,6 +269,9 @@ export class RestoreTransaction {
         replacements.push(replacement);
 
         if (directory.source) {
+          if ((await fs.promises.lstat(directory.source)).isFile()) {
+            await fs.promises.rmdir(staged);
+          }
           const copied = await this.filesystem.copyDirectory(directory.source, staged, { dereference: false, verbatimSymlinks: true });
           if (!copied) {
             throw new Error(directory.error);

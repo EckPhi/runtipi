@@ -44,7 +44,11 @@ test('backs up and restores container symlinks without reading or changing their
   repository.clearRestoreJournal.mockResolvedValue(undefined);
 
   const config = fromPartial<ConfigurationService>({ get: () => ({ dataDir }) });
-  const appFiles = fromPartial<AppFilesManager>({ getAppPaths: () => ({ appDataDir, appInstalledDir }) });
+  const appFiles = fromPartial<AppFilesManager>({
+    getAppPaths: () => ({ appDataDir, appInstalledDir }),
+    getAppBackupPolicy: async () => ({ stop: true }),
+    getAppBackupHook: async () => null,
+  });
   const docker = mock<DockerService>();
   docker.composeApp.mockImplementation(async (_urn, command) => {
     if (command === 'up --detach --remove-orphans') {

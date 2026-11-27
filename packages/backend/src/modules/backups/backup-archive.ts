@@ -5,6 +5,8 @@ import type { ArchiveEntry } from '@/core/archive/archive.service';
 import type { FilesystemService } from '@/core/filesystem/filesystem.service';
 import type { LoggerService } from '@/core/logger/logger.service';
 
+import { backupManifestFilename } from './backup-policy';
+
 export const migrationMetadataFilename = 'runtipi-migrations.json';
 
 export class BackupArchive {
@@ -37,7 +39,7 @@ export class BackupArchive {
 
       const rootName = entryPath.split('/')[0];
 
-      const isMetadata = entryPath === migrationMetadataFilename && entry.type === '-';
+      const isMetadata = (entryPath === migrationMetadataFilename || entryPath === backupManifestFilename) && entry.type === '-';
       const isAppEntry = rootName === 'app-data' || rootName === 'app' || rootName === 'user-config';
       if (!isMetadata && !isAppEntry) {
         throw new Error('Backup contains unsupported file types');

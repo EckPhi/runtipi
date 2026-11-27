@@ -156,3 +156,19 @@ test('rejects a queued command if a background job was admitted while it waited 
   finish();
   await jobs.onModuleDestroy();
 });
+
+test.each([
+  ['restore', { pendingHook: 'defer' }],
+  ['start', { pendingHook: 'run' }],
+  ['update', { pendingHook: 'run' }],
+  ['backup', { pendingHook: 'run' }],
+] as const)('reconciles before %s with pending restore hooks set to %j', async (command, options) => {
+  const appUrn = 'demo:store' as AppUrn;
+  const migrations = mock<AppMigrationService>();
+  const factory = new AppLifecycleCommandFactory(mock<ModuleRef>(), mock<Dockerode>(), new AsyncMutex(), mock<AppJobService>(), migrations);
+  migrations.reconcile.mockRejectedValue(new Error('stop before the command'));
+  const context = { signal: new AbortController().signal, progress: vi.fn(), disableCancellation: vi.fn() };
+
+  await expect(factory.execute({ appUrn, command, requestId: crypto.randomUUID(), form: {} } as never, context)).rejects.toThrow();
+  expect(migrations.reconcile).toHaveBeenCalledWith(appUrn, options);
+});

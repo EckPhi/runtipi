@@ -37,7 +37,10 @@ const setup = async (phase: RestorePhase, destinationExisted = true) => {
   repository.getRestoreJournal.mockImplementation(async () => state.journal);
   repository.finishRestore.mockImplementation(async (_appUrn, ledger, nextPhase) => {
     state.ledger = ledger;
-    if (state.journal) state.journal.phase = nextPhase;
+    if (state.journal) {
+      state.journal.phase = nextPhase;
+      if (nextPhase === 'hooks-pending') state.journal.targetState = ledger;
+    }
   });
   repository.clearRestoreJournal.mockImplementation(async () => {
     state.journal = undefined;
@@ -201,4 +204,85 @@ test('preserves the original and recovery failures when the database remains una
   for (const directory of directories) {
     await expect(fs.promises.readFile(path.join(directory.destination, 'state'), 'utf8')).resolves.toBe('previous');
   }
+});
+
+test('recovers an interrupted app-data-only restore with the previous migration state', async () => {
+  const { transaction, directories, state } = await setup('prepared');
+  const data = directories[0]!;
+  state.journal!.directories = [data];
+  await fs.promises.rename(data.destination, data.original);
+  await fs.promises.rename(data.staged, data.destination);
+  await transaction.reconcile();
+  expect(await fs.promises.readFile(path.join(data.destination, 'state'), 'utf8')).toBe('previous');
+  expect(state.ledger).toEqual(previousState);
+  expect(state.journal).toBeUndefined();
+});
+
+test('rejects a single-directory journal for anything except app-data', async () => {
+  const { transaction, directories, state } = await setup('prepared');
+  state.journal!.directories = [directories[1]!];
+  await expect(transaction.reconcile()).rejects.toThrow();
+  expect(state.journal?.phase).toBe('prepared');
+});
+
+test('rolls back selected files after an interrupted multi-path partial restore', async () => {
+  const { transaction, directories, state } = await setup('prepared');
+  const root = directories[0]!.destination;
+  const selections = ['dump.sql', 'config/settings.json'].map((name, index) => {
+    const destination = path.join(root, name);
+    const staged = path.join(path.dirname(destination), `.${path.basename(destination)}.restore-Abc12${index}`);
+    return { destination, staged, original: `${staged}.previous`, destinationExisted: true };
+  });
+  state.journal!.directories = selections;
+  for (const selected of selections) {
+    await fs.promises.mkdir(path.dirname(selected.destination), { recursive: true });
+    await fs.promises.writeFile(selected.destination, 'previous');
+    await fs.promises.writeFile(selected.staged, 'saved');
+  }
+  await fs.promises.rename(selections[0]!.destination, selections[0]!.original);
+  await fs.promises.rename(selections[0]!.staged, selections[0]!.destination);
+  await transaction.reconcile();
+  for (const selected of selections) {
+    expect(await fs.promises.readFile(selected.destination, 'utf8')).toBe('previous');
+    await expect(fs.promises.access(selected.original)).rejects.toThrow();
+  }
+  expect(await fs.promises.readFile(path.join(root, 'state'), 'utf8')).toBe('previous');
+  expect(state.journal).toBeUndefined();
+});
+
+test.each([0, 1, 3])('preserves a pending hook after replacement crashes with %i swaps', async (swaps) => {
+  const { transaction, directories, state } = await setup('prepared');
+  state.journal!.phase = 'prepared-hook-pending' as RestorePhase;
+  for (const directory of directories.slice(0, swaps)) {
+    await fs.promises.rename(directory.destination, directory.original);
+    await fs.promises.rename(directory.staged, directory.destination);
+  }
+  await transaction.reconcile({ pendingHook: 'defer' });
+  expect(state.journal?.phase).toBe('hooks-pending');
+  expect(state.journal?.targetState).toEqual(previousState);
+  expect(state.ledger).toEqual(previousState);
+  for (const directory of directories) {
+    expect(await fs.promises.readFile(path.join(directory.destination, 'state'), 'utf8')).toBe('previous');
+    await expect(fs.promises.access(directory.staged)).rejects.toThrow();
+  }
+  // No callback is installed in this fixture: lifecycle work must still refuse to proceed.
+  await expect(transaction.reconcile()).rejects.toThrow('Pending restore hook');
+  expect(state.journal?.phase).toBe('hooks-pending');
+});
+
+test('commits the previous ledger after retrying a rolled-back replacement hook', async () => {
+  const { directories, state, repository, filesystem, logger } = await setup('prepared-hook-pending');
+  const hook = vi.fn(async () => undefined);
+  const transaction = new RestoreTransaction(
+    appUrn,
+    directories.map((directory) => directory.destination),
+    filesystem,
+    repository,
+    logger,
+    hook,
+  );
+  await transaction.reconcile();
+  expect(hook).toHaveBeenCalledOnce();
+  expect(state.ledger).toEqual(previousState);
+  expect(state.journal).toBeUndefined();
 });

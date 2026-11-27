@@ -137,6 +137,8 @@ describe('BackupManager backup source validation', () => {
     } as unknown as ConfigurationService;
     const appFilesManager = {
       getAppPaths: vi.fn().mockReturnValue({ appDataDir, appInstalledDir }),
+      getAppBackupPolicy: async () => ({ stop: true }),
+      getAppBackupHook: async () => null,
     } as unknown as AppFilesManager;
     const backupManager = new BackupManager(archiveManager, logger, config, filesystem, appFilesManager, appsRepository, mock<DockerService>());
 
@@ -174,6 +176,8 @@ describe('BackupManager backup source validation', () => {
     const config = { get: vi.fn().mockReturnValue({ dataDir: rootDir }) } as unknown as ConfigurationService;
     const appFilesManager = {
       getAppPaths: vi.fn().mockReturnValue({ appDataDir, appInstalledDir }),
+      getAppBackupPolicy: async () => ({ stop: true }),
+      getAppBackupHook: async () => null,
     } as unknown as AppFilesManager;
     const backupManager = new BackupManager(archiveManager, logger, config, filesystem, appFilesManager, appsRepository, mock<DockerService>());
     const copyFile = vi.spyOn(fs.promises, 'copyFile');

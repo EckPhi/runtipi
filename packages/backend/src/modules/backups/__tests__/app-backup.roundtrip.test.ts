@@ -50,6 +50,9 @@ const setup = async (backup?: unknown) => {
   repository.clearRestoreJournal.mockImplementation(async () => {
     journal = undefined;
   });
+  repository.replaceRestoreJournal.mockImplementation(async (_urn, previousState, targetState, directories) => {
+    journal = fromPartial({ phase: 'prepared', previousState, targetState, directories });
+  });
   const docker = mock<DockerService>();
   docker.getEffectiveMigrationServices.mockResolvedValue({ migration: { image: 'sqlite:latest' } });
   docker.stopAppMigrations.mockResolvedValue(undefined);
@@ -195,11 +198,13 @@ test('rejects an invalid hook service before running it', async () => {
 });
 
 test.each([
-  { version: 2, partial: true, include: ['dump.sql'] },
-  { version: 1, partial: false, include: ['dump.sql'] },
-  { version: 1, partial: true, include: ['../outside'] },
-  { version: 1, partial: true, include: ['missing'] },
-  { version: 1, partial: true, include: [] },
+  { version: 2, partial: true, include: ['dump.sql'], migrationIds: ['v1'] },
+  { version: 1, partial: false, include: ['dump.sql'], migrationIds: ['v1'] },
+  { version: 1, partial: true, include: ['../outside'], migrationIds: ['v1'] },
+  { version: 1, partial: true, include: ['missing'], migrationIds: ['v1'] },
+  { version: 1, partial: true, include: [], migrationIds: ['v1'] },
+  { version: 1, partial: true, include: ['dump.sql'] },
+  { version: 1, partial: true, include: ['dump.sql'], migrationIds: [42] },
 ])('rejects malformed or inconsistent partial manifest %j before changing data', async (manifest) => {
   const { manager, root, archive, backupPath, appDataDir } = await setup();
   const source = path.join(root, 'malformed');
@@ -238,4 +243,73 @@ test('retains a failed restore hook for reconciliation before a later lifecycle 
   });
   await manager.reconcileRestore(appUrn);
   expect(await fs.promises.readFile(path.join(appDataDir, 'recovered'), 'utf8')).toBe('imported');
+});
+
+test('does not leave missing parent directories behind when a partial restore rolls back', async () => {
+  const { manager, appDataDir } = await setup({ include: ['db/dump.sql'] });
+  await fs.promises.mkdir(path.join(appDataDir, 'db'));
+  await fs.promises.writeFile(path.join(appDataDir, 'db/dump.sql'), 'nested dump');
+  const filename = await manager.createBackup(appUrn);
+  await fs.promises.rm(path.join(appDataDir, 'db'), { recursive: true });
+  const rename = fs.promises.rename;
+  vi.spyOn(fs.promises, 'rename').mockImplementation(async (from, to) => {
+    if (String(from).includes('.restore-')) throw new Error('simulated swap failure');
+    return rename(from, to);
+  });
+  onTestFinished(() => {
+    vi.restoreAllMocks();
+  });
+  await expect(manager.restoreApp(appUrn, filename, { allowPartial: true })).rejects.toThrow('simulated swap failure');
+  expect(fs.existsSync(path.join(appDataDir, 'db'))).toBe(false);
+  vi.restoreAllMocks();
+  await manager.restoreApp(appUrn, filename, { allowPartial: true });
+  expect(await fs.promises.readFile(path.join(appDataDir, 'db/dump.sql'), 'utf8')).toBe('nested dump');
+});
+
+test('rejects a partial backup taken with a different migration history', async () => {
+  const { manager, appDataDir, repository } = await setup({ include: ['dump.sql'] });
+  const filename = await manager.createBackup(appUrn);
+  await fs.promises.writeFile(path.join(appDataDir, 'dump.sql'), 'migrated dump');
+  repository.getMigrationState.mockResolvedValue({ initialized: true, migrationIds: ['v1', 'v2'] });
+  await expect(manager.restoreApp(appUrn, filename, { allowPartial: true })).rejects.toThrow(/migration/i);
+  expect(await fs.promises.readFile(path.join(appDataDir, 'dump.sql'), 'utf8')).toBe('migrated dump');
+  expect(repository.createRestoreJournal).not.toHaveBeenCalled();
+  repository.getMigrationState.mockResolvedValue({ initialized: true, migrationIds: ['v1'] });
+  await manager.restoreApp(appUrn, filename, { allowPartial: true });
+  expect(await fs.promises.readFile(path.join(appDataDir, 'dump.sql'), 'utf8')).toBe('saved dump');
+});
+
+test('a pending restore hook blocks lifecycle work but can be replaced by another restore', async () => {
+  const { manager, hook, docker, appDataDir, repository, root, archive, backupPath } = await setup({ include: ['dump.sql'] });
+  await hook('restore');
+  const filename = await manager.createBackup(appUrn);
+  docker.composeMigration.mockRejectedValue(new Error('broken restore hook'));
+  await expect(manager.restoreApp(appUrn, filename, { allowPartial: true })).rejects.toThrow('broken restore hook');
+
+  // Starting, updating or backing up still runs the hook first and refuses while it fails.
+  await expect(manager.reconcileRestore(appUrn)).rejects.toThrow('broken restore hook');
+  await expect(manager.createBackup(appUrn)).rejects.toThrow('broken restore hook');
+  // Work that does not touch app data can defer it.
+  docker.composeMigration.mockClear();
+  await manager.reconcileRestore(appUrn, { pendingHook: 'defer' });
+  expect(docker.composeMigration).not.toHaveBeenCalled();
+  expect((await repository.getRestoreJournal(appUrn))?.phase).toBe('hooks-pending');
+
+  // A rejected archive leaves the pending hook in place.
+  const invalid = path.join(root, 'invalid');
+  await fs.promises.mkdir(path.join(invalid, 'app-data'), { recursive: true });
+  await fs.promises.writeFile(path.join(invalid, 'runtipi-backup.json'), '{}');
+  await archive.createTarGz(invalid, backupPath('invalid.tar.gz'));
+  await expect(manager.restoreApp(appUrn, 'invalid.tar.gz', { allowPartial: true })).rejects.toThrow();
+  expect((await repository.getRestoreJournal(appUrn))?.phase).toBe('hooks-pending');
+
+  // Restoring again replaces the pending hook and runs the hook for the new restore.
+  docker.composeMigration.mockImplementation(async (_urn, _hook, command) => {
+    if (command.startsWith('run')) await fs.promises.writeFile(path.join(appDataDir, 'recovered'), 'imported');
+    return { success: true, stdout: '', stderr: '' };
+  });
+  await manager.restoreApp(appUrn, filename, { allowPartial: true });
+  expect(await fs.promises.readFile(path.join(appDataDir, 'recovered'), 'utf8')).toBe('imported');
+  expect(await repository.getRestoreJournal(appUrn)).toBeUndefined();
+  expect((await fs.promises.readdir(appDataDir)).filter((name) => name.includes('.restore-'))).toEqual([]);
 });

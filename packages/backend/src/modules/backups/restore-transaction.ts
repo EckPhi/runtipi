@@ -33,15 +33,30 @@ export class RestoreTransaction {
   ) {}
 
   async restore(sources: RestoreSource[], targetState: MigrationLedgerState, runHook = false) {
+    const pending = await this.getPendingHookJournal();
     const previousState = await this.appsRepository.getMigrationState(this.appUrn);
     const directories = await this.stageRestoredDirectories(sources);
 
     try {
-      await this.appsRepository.createRestoreJournal(this.appUrn, previousState, targetState, directories);
+      if (pending) {
+        // A committed restore's previous copies are never needed again; the journal swap keeps the pending hook until it is replaced.
+        this.logger.warn(`Replacing the pending restore hook for ${this.appUrn} with a new restore`);
+        for (const directory of pending.directories) {
+          await this.assertSafeRestoreDirectory(directory);
+          await requireFilesystemSuccess(
+            this.filesystem.removeDirectory(directory.original),
+            `Failed to remove restore directory ${directory.original}`,
+          );
+        }
+        await this.appsRepository.replaceRestoreJournal(this.appUrn, previousState, targetState, directories);
+      } else {
+        await this.appsRepository.createRestoreJournal(this.appUrn, previousState, targetState, directories);
+      }
     } catch (error) {
       try {
         const journal = await this.appsRepository.getRestoreJournal(this.appUrn);
-        if (!journal) {
+        const ours = journal?.directories.some((stored) => directories.some((directory) => directory.staged === stored.staged));
+        if (!ours) {
           for (const directory of directories) {
             await this.filesystem.removeDirectory(directory.staged).catch((cleanupError) => {
               this.logger.warn(`Failed to remove restore staging ${directory.staged}`, cleanupError);
@@ -71,7 +86,8 @@ export class RestoreTransaction {
     await this.cleanup(directories, 'original');
   }
 
-  async reconcile() {
+  // 'defer' leaves a restore waiting on its hook in place, for work that does not depend on the restored data.
+  async reconcile(options: { pendingHook?: 'run' | 'defer' } = {}) {
     const stored = await this.appsRepository.getRestoreJournal(this.appUrn);
     if (!stored) {
       return;
@@ -83,9 +99,19 @@ export class RestoreTransaction {
       return;
     }
 
-    if (journal.phase === 'hooks-pending') await this.finishHook(journal.targetState);
+    if (journal.phase === 'hooks-pending') {
+      if (options.pendingHook === 'defer') return;
+      await this.finishHook(journal.targetState);
+    }
     const directoryKind = journal.phase === 'recovered' ? 'staged' : 'original';
     await this.cleanup(journal.directories, directoryKind);
+  }
+
+  private async getPendingHookJournal() {
+    // Other unfinished journals are reconciled before a restore; inserting a new journal still refuses them.
+    const stored = await this.appsRepository.getRestoreJournal(this.appUrn);
+    if (stored?.phase !== 'hooks-pending') return null;
+    return this.validateJournal(stored);
   }
 
   private async finishHook(state: MigrationLedgerState) {

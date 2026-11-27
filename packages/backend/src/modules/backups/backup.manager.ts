@@ -15,7 +15,16 @@ import { AppFilesManager } from '../apps/app-files-manager';
 import { AppsRepository } from '../apps/apps.repository';
 import { BackupArchive, migrationMetadataFilename } from './backup-archive';
 import { BackupResources, backupStep, requireFilesystemSuccess, runBackupEffect } from './backup-resources';
-import { assertBackupPath, backupManifestFilename, normalizeBackupIncludes, parseBackupManifest, validatePartialEntries } from './backup-policy';
+import {
+  assertBackupPath,
+  assertSameMigrationHistory,
+  type BackupManifest,
+  backupManifestFilename,
+  normalizeBackupIncludes,
+  parseBackupManifest,
+  partialRestoreRoots,
+  validatePartialEntries,
+} from './backup-policy';
 import { RestoreTransaction } from './restore-transaction';
 import { DockerService } from '../docker/docker.service';
 import type { AppJobContext } from '../app-lifecycle/services/app-job.service';
@@ -129,7 +138,7 @@ export class BackupManager implements OnModuleInit {
     context?.signal.throwIfAborted();
     await this.reconcileRestore(appUrn);
 
-    const policy = options?.mode === 'full' ? { stop: true } : ((await this.appFilesManager.getAppBackupPolicy?.(appUrn)) ?? { stop: true });
+    const policy = options?.mode === 'full' ? { stop: true } : await this.appFilesManager.getAppBackupPolicy(appUrn);
     const include = policy.include === undefined ? undefined : normalizeBackupIncludes(policy.include);
     const { appName, appStoreId, backupDir, userConfigDir } = this.getBackupPaths(appUrn);
     const { snapshotRoot, archiveRoot } = this.getStagingPaths();
@@ -185,8 +194,14 @@ export class BackupManager implements OnModuleInit {
               });
 
               if (include !== undefined) {
+                const { migrationIds } = await manager.appsRepository.getMigrationState(appUrn);
                 await requireFilesystemSuccess(
-                  manager.filesystem.writeJsonFile(path.join(contentDirectory, backupManifestFilename), { version: 1, partial: true, include }),
+                  manager.filesystem.writeJsonFile(path.join(contentDirectory, backupManifestFilename), {
+                    version: 1,
+                    partial: true,
+                    include,
+                    migrationIds,
+                  }),
                   'Failed to write backup manifest',
                 );
               } else {
@@ -267,7 +282,8 @@ export class BackupManager implements OnModuleInit {
   }
 
   public async restoreApp(appUrn: AppUrn, filename: string, options?: { allowPartial: boolean }): Promise<MigrationBackupState | null> {
-    await this.reconcileRestore(appUrn);
+    // A new restore replaces data that is still waiting on its restore hook.
+    await this.reconcileRestore(appUrn, { pendingHook: 'defer' });
     const manager = this;
 
     return runBackupEffect(
@@ -307,7 +323,7 @@ export class BackupManager implements OnModuleInit {
               if (!options?.allowPartial) throw new Error('Partial backups cannot be used for migration rollback');
               const manifest = parseBackupManifest(await manager.filesystem.readJsonFile(manifestPath));
               validatePartialEntries(entries, manifest.include);
-              await manager.restorePartial(appUrn, restoreDir, manifest.include);
+              await manager.restorePartial(appUrn, restoreDir, manifest);
               return null;
             }
 
@@ -364,7 +380,7 @@ export class BackupManager implements OnModuleInit {
   }
 
   private async runHook(appUrn: AppUrn, name: 'backup' | 'restore') {
-    const hook = await this.appFilesManager.getAppBackupHook?.(appUrn, name);
+    const hook = await this.appFilesManager.getAppBackupHook(appUrn, name);
     if (!hook) return;
     try {
       await this.docker.stopAppMigrations(appUrn);
@@ -379,15 +395,17 @@ export class BackupManager implements OnModuleInit {
     }
   }
 
-  private async restorePartial(appUrn: AppUrn, restoreDir: string, include: string[]) {
+  private async restorePartial(appUrn: AppUrn, restoreDir: string, manifest: BackupManifest) {
     const extracted = path.join(restoreDir, 'app-data');
     await this.archiveFiles.validateRestoreDirectory(extracted, { allowSymlinks: true, rejectHardLinks: true });
     const source = await fs.promises.realpath(extracted);
     const { appDataDir } = this.appFilesManager.getAppPaths(appUrn);
-    for (const selected of include) await assertBackupPath(source, selected);
+    for (const selected of manifest.include) await assertBackupPath(source, selected);
     const state = await this.appsRepository.getMigrationState(appUrn);
+    assertSameMigrationHistory(manifest, state.migrationIds);
+    const roots = await partialRestoreRoots(appDataDir, manifest.include);
     await this.restoreTransaction(appUrn).restore(
-      include.map((selected) => ({
+      roots.map((selected) => ({
         source: path.join(source, selected),
         destination: path.join(appDataDir, selected),
         error: 'Failed to copy partial restore data',
@@ -397,8 +415,8 @@ export class BackupManager implements OnModuleInit {
     );
   }
 
-  public async reconcileRestore(appUrn: AppUrn) {
-    await this.restoreTransaction(appUrn).reconcile();
+  public async reconcileRestore(appUrn: AppUrn, options?: { pendingHook?: 'run' | 'defer' }) {
+    await this.restoreTransaction(appUrn).reconcile(options);
   }
 
   private restoreTransaction(appUrn: AppUrn) {

@@ -19,8 +19,8 @@ export class AppMigrationService {
     private readonly logger: LoggerService,
   ) {}
 
-  public async reconcile(appUrn: AppUrn) {
-    await this.backupManager.reconcileRestore(appUrn);
+  public async reconcile(appUrn: AppUrn, options?: { pendingHook?: 'run' | 'defer' }) {
+    await this.backupManager.reconcileRestore(appUrn, options);
     const app = await this.appsRepository.getAppByUrn(appUrn);
     if (!app?.migrationRecovery) return;
 

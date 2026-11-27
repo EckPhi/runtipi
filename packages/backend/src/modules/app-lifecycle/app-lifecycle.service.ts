@@ -113,7 +113,7 @@ export class AppLifecycleService {
       const release = await this.mutex.acquire(params.appUrn);
 
       try {
-        await this.appMigrationService.reconcile(params.appUrn);
+        await this.appMigrationService.reconcile(params.appUrn, { pendingHook: 'defer' });
         await this.backupManager.deleteBackup(params.appUrn, params.filename);
       } finally {
         release();

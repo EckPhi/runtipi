@@ -217,6 +217,8 @@ describe('BackupManager backup publication', () => {
     };
     const files = fromPartial<AppFilesManager>({
       getAppPaths: () => ({ appDataDir: '/app-data/test-store/test-app', appInstalledDir: '/data/apps/test-store/test-app' }),
+      getAppBackupPolicy: async () => ({ stop: true }),
+      getAppBackupHook: async () => null,
     });
     const config = { get: () => ({ dataDir: '/data' }) } as unknown as ConfigurationService;
     const manager = new BackupManager(archive as unknown as ArchiveService, logger, config, filesystem, files, appsRepository, mock<DockerService>());
@@ -341,6 +343,8 @@ describe('BackupManager restore security', () => {
 
     const appFilesManager = {
       getAppPaths: vi.fn().mockReturnValue({ appDataDir, appInstalledDir }),
+      getAppBackupPolicy: async () => ({ stop: true }),
+      getAppBackupHook: async () => null,
     } as unknown as AppFilesManager;
 
     vi.spyOn(filesystem, 'createTempDirectory').mockResolvedValue(restoreDir);

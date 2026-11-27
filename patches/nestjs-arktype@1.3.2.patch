@@ -1,0 +1,15 @@
+diff --git a/dist/index.js b/dist/index.js
+index adfe67f329fd90ca0d1f1b6dab8b68520cd14d63..58e72febf337a455ec190261fc631b24584133e5 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -94,7 +94,9 @@ var applyApiProperties = (jsonSchema, target) => {
+     if (value.type === "object" && value.properties) {
+       Decorator({ selfRequired: isRequired, ...value })(target.prototype, key);
+     } else {
+-      Decorator({ type: "string", ...value })(target.prototype, key);
++      // Keep the fallback inferred: Nest Swagger must not constrain schema unions to strings.
++      Reflect.defineMetadata("design:type", String, target.prototype, key);
++      Decorator({ ...value })(target.prototype, key);
+     }
+   }
+ };

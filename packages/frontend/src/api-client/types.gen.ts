@@ -66,6 +66,7 @@ export type AppContextDto = {
         persistTraefikConfig: boolean;
         port: number;
         postgresPort: number;
+        sessionMaxAgeInDays: number;
         sslPort: number;
         timeZone: string;
         experimental_insecureCookie?: boolean;
@@ -105,6 +106,7 @@ export type UserSettingsBody = {
     persistTraefikConfig?: boolean;
     port?: number | string;
     postgresPort?: number | string;
+    sessionMaxAgeInDays?: number | string;
     sslPort?: number | string;
     themeBase?: string;
     themeColor?: string;
@@ -124,74 +126,6 @@ export type LoadDto = {
     memoryTotal: number;
     percentUsed: number;
     percentUsedMemory: number;
-};
-
-export type LoginBody = {
-    password: string;
-    username: string;
-    redirectUrl?: string;
-};
-
-export type LoginDto = {
-    success: boolean;
-    redirectUrl?: string;
-    totpSessionId?: string;
-};
-
-export type VerifyTotpBody = {
-    totpCode: string;
-    totpSessionId: string;
-    redirectUrl?: string;
-};
-
-export type RegisterBody = {
-    password: string;
-    username: string;
-    redirectUrl?: string;
-};
-
-export type RegisterDto = {
-    success: boolean;
-};
-
-export type ForwardAuthBody = {
-    redirectUrl: string;
-};
-
-export type ChangeUsernameBody = {
-    newUsername: string;
-    password: string;
-};
-
-export type ChangePasswordBody = {
-    currentPassword: string;
-    newPassword: string;
-};
-
-export type GetTotpUriBody = {
-    password: string;
-};
-
-export type GetTotpUriDto = {
-    key: string;
-    uri: string;
-};
-
-export type SetupTotpBody = {
-    code: string;
-};
-
-export type DisableTotpBody = {
-    password: string;
-};
-
-export type ResetPasswordBody = {
-    newPassword: string;
-};
-
-export type ResetPasswordDto = {
-    email: string;
-    success: boolean;
 };
 
 export type MyAppsDto = {
@@ -258,6 +192,10 @@ export type MyAppsDto = {
             updated_at: number;
             urn: string;
             version: string;
+            backup?: {
+                stop: boolean;
+                include?: Array<string>;
+            };
             gid?: number;
             min_tipi_version?: string;
             port?: number;
@@ -337,6 +275,10 @@ export type GuestAppsDto = {
             updated_at: number;
             urn: string;
             version: string;
+            backup?: {
+                stop: boolean;
+                include?: Array<string>;
+            };
             gid?: number;
             min_tipi_version?: string;
             port?: number;
@@ -401,6 +343,10 @@ export type GetAppDto = {
         updated_at: number;
         urn: string;
         version: string;
+        backup?: {
+            stop: boolean;
+            include?: Array<string>;
+        };
         gid?: number;
         min_tipi_version?: string;
         port?: number;
@@ -496,6 +442,74 @@ export type UpdateAppStoreBodyDto = {
 };
 
 export type UpdateAppStoreDto = {
+    success: boolean;
+};
+
+export type LoginBody = {
+    password: string;
+    username: string;
+    redirectUrl?: string;
+};
+
+export type LoginDto = {
+    success: boolean;
+    redirectUrl?: string;
+    totpSessionId?: string;
+};
+
+export type VerifyTotpBody = {
+    totpCode: string;
+    totpSessionId: string;
+    redirectUrl?: string;
+};
+
+export type RegisterBody = {
+    password: string;
+    username: string;
+    redirectUrl?: string;
+};
+
+export type RegisterDto = {
+    success: boolean;
+};
+
+export type ForwardAuthBody = {
+    redirectUrl: string;
+};
+
+export type ChangeUsernameBody = {
+    newUsername: string;
+    password: string;
+};
+
+export type ChangePasswordBody = {
+    currentPassword: string;
+    newPassword: string;
+};
+
+export type GetTotpUriBody = {
+    password: string;
+};
+
+export type GetTotpUriDto = {
+    key: string;
+    uri: string;
+};
+
+export type SetupTotpBody = {
+    code: string;
+};
+
+export type DisableTotpBody = {
+    password: string;
+};
+
+export type ResetPasswordBody = {
+    newPassword: string;
+};
+
+export type ResetPasswordDto = {
+    email: string;
     success: boolean;
 };
 
@@ -630,19 +644,12 @@ export type CreateCustomAppDto = {
                     internal_port?: number | string;
                     is_main?: boolean;
                 };
-                [key: string]: unknown | string | {
-                    [key: string]: number | string | boolean;
-                } | Array<string> | {
-                    [key: string]: unknown;
-                } | Array<string> | Array<unknown> | {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                } | undefined;
+                [key: string]: unknown;
             };
         };
         'x-runtipi': {
             schema_version: 1 | 2;
+            migrations?: never;
             overrides?: Array<{
                 architecture: 'amd64' | 'arm64';
                 services: {
@@ -660,15 +667,7 @@ export type CreateCustomAppDto = {
                             internal_port?: number | string;
                             is_main?: boolean;
                         };
-                        [key: string]: unknown | string | {
-                            [key: string]: number | string | boolean;
-                        } | Array<string> | {
-                            [key: string]: unknown;
-                        } | Array<string> | Array<unknown> | {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        } | undefined;
+                        [key: string]: unknown;
                     };
                 };
             }>;
@@ -676,65 +675,7 @@ export type CreateCustomAppDto = {
         networks?: {
             [key: string]: unknown;
         };
-        [key: string]: unknown | {
-            [key: string]: {
-                image: string;
-                labels?: {
-                    [key: string]: number | string | boolean;
-                } | Array<string>;
-                networks?: {
-                    [key: string]: unknown;
-                } | Array<string>;
-                ports?: Array<unknown>;
-                'x-runtipi'?: {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                };
-                [key: string]: unknown | string | {
-                    [key: string]: number | string | boolean;
-                } | Array<string> | {
-                    [key: string]: unknown;
-                } | Array<string> | Array<unknown> | {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                } | undefined;
-            };
-        } | {
-            schema_version: 1 | 2;
-            overrides?: Array<{
-                architecture: 'amd64' | 'arm64';
-                services: {
-                    [key: string]: {
-                        image: string;
-                        labels?: {
-                            [key: string]: number | string | boolean;
-                        } | Array<string>;
-                        networks?: {
-                            [key: string]: unknown;
-                        } | Array<string>;
-                        ports?: Array<unknown>;
-                        'x-runtipi'?: {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        };
-                        [key: string]: unknown | string | {
-                            [key: string]: number | string | boolean;
-                        } | Array<string> | {
-                            [key: string]: unknown;
-                        } | Array<string> | Array<unknown> | {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        } | undefined;
-                    };
-                };
-            }>;
-        } | {
-            [key: string]: unknown;
-        } | undefined;
+        [key: string]: unknown;
     };
     name: string;
 };
@@ -762,19 +703,12 @@ export type UpdateCustomAppDto = {
                     internal_port?: number | string;
                     is_main?: boolean;
                 };
-                [key: string]: unknown | string | {
-                    [key: string]: number | string | boolean;
-                } | Array<string> | {
-                    [key: string]: unknown;
-                } | Array<string> | Array<unknown> | {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                } | undefined;
+                [key: string]: unknown;
             };
         };
         'x-runtipi': {
             schema_version: 1 | 2;
+            migrations?: never;
             overrides?: Array<{
                 architecture: 'amd64' | 'arm64';
                 services: {
@@ -792,15 +726,7 @@ export type UpdateCustomAppDto = {
                             internal_port?: number | string;
                             is_main?: boolean;
                         };
-                        [key: string]: unknown | string | {
-                            [key: string]: number | string | boolean;
-                        } | Array<string> | {
-                            [key: string]: unknown;
-                        } | Array<string> | Array<unknown> | {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        } | undefined;
+                        [key: string]: unknown;
                     };
                 };
             }>;
@@ -808,65 +734,7 @@ export type UpdateCustomAppDto = {
         networks?: {
             [key: string]: unknown;
         };
-        [key: string]: unknown | {
-            [key: string]: {
-                image: string;
-                labels?: {
-                    [key: string]: number | string | boolean;
-                } | Array<string>;
-                networks?: {
-                    [key: string]: unknown;
-                } | Array<string>;
-                ports?: Array<unknown>;
-                'x-runtipi'?: {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                };
-                [key: string]: unknown | string | {
-                    [key: string]: number | string | boolean;
-                } | Array<string> | {
-                    [key: string]: unknown;
-                } | Array<string> | Array<unknown> | {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                } | undefined;
-            };
-        } | {
-            schema_version: 1 | 2;
-            overrides?: Array<{
-                architecture: 'amd64' | 'arm64';
-                services: {
-                    [key: string]: {
-                        image: string;
-                        labels?: {
-                            [key: string]: number | string | boolean;
-                        } | Array<string>;
-                        networks?: {
-                            [key: string]: unknown;
-                        } | Array<string>;
-                        ports?: Array<unknown>;
-                        'x-runtipi'?: {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        };
-                        [key: string]: unknown | string | {
-                            [key: string]: number | string | boolean;
-                        } | Array<string> | {
-                            [key: string]: unknown;
-                        } | Array<string> | Array<unknown> | {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        } | undefined;
-                    };
-                };
-            }>;
-        } | {
-            [key: string]: unknown;
-        } | undefined;
+        [key: string]: unknown;
     };
 };
 
@@ -892,6 +760,400 @@ export type TemplateDiffDto = {
     templateVersion: number;
     current?: string;
     template?: string;
+};
+
+export type AgentCredentialsDto = {
+    credentials: Array<{
+        createdAt: number;
+        expiresAt: number;
+        id: string;
+        lastUsedAt: number | null;
+        name: string;
+    }>;
+};
+
+export type CreateAgentCredentialBody = {
+    name: string;
+    password: string;
+    expiresInDays?: number;
+};
+
+export type CreatedAgentCredentialDto = {
+    credential: {
+        createdAt: number;
+        expiresAt: number;
+        id: string;
+        lastUsedAt: number | null;
+        name: string;
+    };
+    token: string;
+};
+
+export type SearchPluginsDto = {
+    data: Array<{
+        author: string;
+        available: boolean;
+        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+        compatibility: {
+            compatible: boolean;
+            minTipiVersion: string | null;
+            reason: 'deprecated' | 'min_tipi_version' | 'unavailable' | null;
+        };
+        deprecated: boolean;
+        description: string;
+        id: string;
+        installed: boolean;
+        name: string;
+        settings: {
+            global: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+            per_app: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+        };
+        short_desc: string;
+        source: string;
+        tipi_version: number;
+        urn: string;
+        version: string;
+        min_tipi_version?: string;
+        website?: string;
+    }>;
+    total: number;
+    nextCursor?: string | null;
+};
+
+export type PluginDetailsDto = {
+    compatibility: {
+        compatible: boolean;
+        minTipiVersion: string | null;
+        reason: 'deprecated' | 'min_tipi_version' | 'unavailable' | null;
+    };
+    info: {
+        author: string;
+        available: boolean;
+        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+        deprecated: boolean;
+        description: string;
+        id: string;
+        name: string;
+        settings: {
+            global: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+            per_app: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+        };
+        short_desc: string;
+        source: string;
+        tipi_version: number;
+        urn: string;
+        version: string;
+        min_tipi_version?: string;
+        website?: string;
+    };
+    installed: {
+        createdAt: number;
+        enabled: boolean;
+        globalConfig: {
+            [key: string]: number | string | boolean;
+        };
+        id: number;
+        info: {
+            author: string;
+            available: boolean;
+            capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+            deprecated: boolean;
+            description: string;
+            id: string;
+            name: string;
+            settings: {
+                global: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+                per_app: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+            };
+            short_desc: string;
+            source: string;
+            tipi_version: number;
+            urn: string;
+            version: string;
+            min_tipi_version?: string;
+            website?: string;
+        } | null;
+        installedVersion: string;
+        latestTipiVersion: number | null;
+        latestVersion: string | null;
+        pluginId: string;
+        pluginStoreSlug: string;
+        tipiVersion: number;
+        updateAvailable: boolean;
+        updatedAt: number;
+        urn: string;
+    } | null;
+    updateAvailable: boolean;
+};
+
+export type InstalledPluginsDto = {
+    plugins: Array<{
+        createdAt: number;
+        enabled: boolean;
+        globalConfig: {
+            [key: string]: number | string | boolean;
+        };
+        id: number;
+        info: {
+            author: string;
+            available: boolean;
+            capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+            deprecated: boolean;
+            description: string;
+            id: string;
+            name: string;
+            settings: {
+                global: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+                per_app: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+            };
+            short_desc: string;
+            source: string;
+            tipi_version: number;
+            urn: string;
+            version: string;
+            min_tipi_version?: string;
+            website?: string;
+        } | null;
+        installedVersion: string;
+        latestTipiVersion: number | null;
+        latestVersion: string | null;
+        pluginId: string;
+        pluginStoreSlug: string;
+        tipiVersion: number;
+        updateAvailable: boolean;
+        updatedAt: number;
+        urn: string;
+    }>;
+};
+
+export type InstalledPluginDto = {
+    createdAt: number;
+    enabled: boolean;
+    globalConfig: {
+        [key: string]: number | string | boolean;
+    };
+    id: number;
+    info: {
+        author: string;
+        available: boolean;
+        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+        deprecated: boolean;
+        description: string;
+        id: string;
+        name: string;
+        settings: {
+            global: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+            per_app: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+        };
+        short_desc: string;
+        source: string;
+        tipi_version: number;
+        urn: string;
+        version: string;
+        min_tipi_version?: string;
+        website?: string;
+    } | null;
+    installedVersion: string;
+    latestTipiVersion: number | null;
+    latestVersion: string | null;
+    pluginId: string;
+    pluginStoreSlug: string;
+    tipiVersion: number;
+    updateAvailable: boolean;
+    updatedAt: number;
+    urn: string;
+};
+
+export type InstallPluginBodyDto = {
+    globalConfig?: {
+        [key: string]: number | string | boolean;
+    };
+};
+
+export type PluginSuccessDto = {
+    success: boolean;
+};
+
+export type UpdatePluginBodyDto = {
+    globalConfig?: {
+        [key: string]: number | string | boolean;
+    };
+};
+
+export type UpdatePluginConfigBodyDto = {
+    globalConfig: {
+        [key: string]: number | string | boolean;
+    };
 };
 
 export type UserContextData = {
@@ -963,162 +1225,6 @@ export type DownloadLocalCertificateData = {
 };
 
 export type DownloadLocalCertificateResponses = {
-    200: unknown;
-};
-
-export type GetTranslationData = {
-    body?: never;
-    path: {
-        ns: string;
-        lng: string;
-    };
-    query?: never;
-    url: '/api/i18n/locales/{ns}/{lng}.json';
-};
-
-export type GetTranslationResponses = {
-    200: unknown;
-};
-
-export type LoginData = {
-    body: LoginBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/login';
-};
-
-export type LoginResponses = {
-    default: LoginDto;
-};
-
-export type LoginResponse = LoginResponses[keyof LoginResponses];
-
-export type VerifyTotpData = {
-    body: VerifyTotpBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/verify-totp';
-};
-
-export type VerifyTotpResponses = {
-    default: LoginDto;
-};
-
-export type VerifyTotpResponse = VerifyTotpResponses[keyof VerifyTotpResponses];
-
-export type RegisterData = {
-    body: RegisterBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/register';
-};
-
-export type RegisterResponses = {
-    default: RegisterDto;
-};
-
-export type RegisterResponse = RegisterResponses[keyof RegisterResponses];
-
-export type LogoutData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/auth/logout';
-};
-
-export type LogoutResponses = {
-    201: unknown;
-};
-
-export type ForwardAuthData = {
-    body: ForwardAuthBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/forward-auth';
-};
-
-export type ForwardAuthResponses = {
-    201: unknown;
-};
-
-export type ChangeUsernameData = {
-    body: ChangeUsernameBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/username';
-};
-
-export type ChangeUsernameResponses = {
-    200: unknown;
-};
-
-export type ChangePasswordData = {
-    body: ChangePasswordBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/password';
-};
-
-export type ChangePasswordResponses = {
-    200: unknown;
-};
-
-export type GetTotpUriData = {
-    body: GetTotpUriBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/totp/get-uri';
-};
-
-export type GetTotpUriResponses = {
-    default: GetTotpUriDto;
-};
-
-export type GetTotpUriResponse = GetTotpUriResponses[keyof GetTotpUriResponses];
-
-export type SetupTotpData = {
-    body: SetupTotpBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/totp/setup';
-};
-
-export type SetupTotpResponses = {
-    200: unknown;
-};
-
-export type DisableTotpData = {
-    body: DisableTotpBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/totp/disable';
-};
-
-export type DisableTotpResponses = {
-    200: unknown;
-};
-
-export type ResetPasswordData = {
-    body: ResetPasswordBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/reset-password';
-};
-
-export type ResetPasswordResponses = {
-    default: ResetPasswordDto;
-};
-
-export type ResetPasswordResponse = ResetPasswordResponses[keyof ResetPasswordResponses];
-
-export type TraefikData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/auth/traefik';
-};
-
-export type TraefikResponses = {
     200: unknown;
 };
 
@@ -1343,6 +1449,162 @@ export type UpdateAppStoreResponses = {
 };
 
 export type UpdateAppStoreResponse = UpdateAppStoreResponses[keyof UpdateAppStoreResponses];
+
+export type GetTranslationData = {
+    body?: never;
+    path: {
+        ns: string;
+        lng: string;
+    };
+    query?: never;
+    url: '/api/i18n/locales/{ns}/{lng}.json';
+};
+
+export type GetTranslationResponses = {
+    200: unknown;
+};
+
+export type LoginData = {
+    body: LoginBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/login';
+};
+
+export type LoginResponses = {
+    default: LoginDto;
+};
+
+export type LoginResponse = LoginResponses[keyof LoginResponses];
+
+export type VerifyTotpData = {
+    body: VerifyTotpBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/verify-totp';
+};
+
+export type VerifyTotpResponses = {
+    default: LoginDto;
+};
+
+export type VerifyTotpResponse = VerifyTotpResponses[keyof VerifyTotpResponses];
+
+export type RegisterData = {
+    body: RegisterBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/register';
+};
+
+export type RegisterResponses = {
+    default: RegisterDto;
+};
+
+export type RegisterResponse = RegisterResponses[keyof RegisterResponses];
+
+export type LogoutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/auth/logout';
+};
+
+export type LogoutResponses = {
+    201: unknown;
+};
+
+export type ForwardAuthData = {
+    body: ForwardAuthBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/forward-auth';
+};
+
+export type ForwardAuthResponses = {
+    201: unknown;
+};
+
+export type ChangeUsernameData = {
+    body: ChangeUsernameBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/username';
+};
+
+export type ChangeUsernameResponses = {
+    200: unknown;
+};
+
+export type ChangePasswordData = {
+    body: ChangePasswordBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/password';
+};
+
+export type ChangePasswordResponses = {
+    200: unknown;
+};
+
+export type GetTotpUriData = {
+    body: GetTotpUriBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/totp/get-uri';
+};
+
+export type GetTotpUriResponses = {
+    default: GetTotpUriDto;
+};
+
+export type GetTotpUriResponse = GetTotpUriResponses[keyof GetTotpUriResponses];
+
+export type SetupTotpData = {
+    body: SetupTotpBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/totp/setup';
+};
+
+export type SetupTotpResponses = {
+    200: unknown;
+};
+
+export type DisableTotpData = {
+    body: DisableTotpBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/totp/disable';
+};
+
+export type DisableTotpResponses = {
+    200: unknown;
+};
+
+export type ResetPasswordData = {
+    body: ResetPasswordBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/reset-password';
+};
+
+export type ResetPasswordResponses = {
+    default: ResetPasswordDto;
+};
+
+export type ResetPasswordResponse = ResetPasswordResponses[keyof ResetPasswordResponses];
+
+export type TraefikData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/auth/traefik';
+};
+
+export type TraefikResponses = {
+    200: unknown;
+};
 
 export type GetAppJobData = {
     body?: never;
@@ -1745,23 +2007,35 @@ export type CheckErrors = {
      * The Health Check is not successful
      */
     503: {
-        status?: string;
+        status?: 'error' | 'shutting_down';
         info?: {
             [key: string]: {
-                status: string;
-                [key: string]: unknown | string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
+                [key: string]: unknown;
             };
-        };
+        } | null;
         error?: {
             [key: string]: {
-                status: string;
-                [key: string]: unknown | string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
+                [key: string]: unknown;
             };
-        };
+        } | null;
         details?: {
             [key: string]: {
-                status: string;
-                [key: string]: unknown | string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
+                [key: string]: unknown;
             };
         };
     };
@@ -1774,23 +2048,35 @@ export type CheckResponses = {
      * The Health Check is successful
      */
     200: {
-        status?: string;
+        status?: 'ok' | 'degraded';
         info?: {
             [key: string]: {
-                status: string;
-                [key: string]: unknown | string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
+                [key: string]: unknown;
             };
-        };
+        } | null;
         error?: {
             [key: string]: {
-                status: string;
-                [key: string]: unknown | string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
+                [key: string]: unknown;
             };
-        };
+        } | null;
         details?: {
             [key: string]: {
-                status: string;
-                [key: string]: unknown | string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
+                [key: string]: unknown;
             };
         };
     };
@@ -1968,6 +2254,197 @@ export type SyncWithTemplateResponses = {
 };
 
 export type SyncWithTemplateResponse = SyncWithTemplateResponses[keyof SyncWithTemplateResponses];
+
+export type ListAgentCredentialsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/agent-credentials';
+};
+
+export type ListAgentCredentialsResponses = {
+    default: AgentCredentialsDto;
+};
+
+export type ListAgentCredentialsResponse = ListAgentCredentialsResponses[keyof ListAgentCredentialsResponses];
+
+export type CreateAgentCredentialData = {
+    body: CreateAgentCredentialBody;
+    path?: never;
+    query?: never;
+    url: '/api/agent-credentials';
+};
+
+export type CreateAgentCredentialResponses = {
+    default: CreatedAgentCredentialDto;
+};
+
+export type CreateAgentCredentialResponse = CreateAgentCredentialResponses[keyof CreateAgentCredentialResponses];
+
+export type RevokeAgentCredentialData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/agent-credentials/{id}';
+};
+
+export type RevokeAgentCredentialResponses = {
+    200: unknown;
+};
+
+export type SearchCatalogData = {
+    body?: never;
+    path?: never;
+    query?: {
+        capability?: 'backup-backend' | 'compose' | 'dashboard-widget';
+        cursor?: string;
+        pageSize?: number | string;
+        search?: string;
+        storeId?: string;
+    };
+    url: '/api/plugins/catalog/search';
+};
+
+export type SearchCatalogResponses = {
+    default: SearchPluginsDto;
+};
+
+export type SearchCatalogResponse = SearchCatalogResponses[keyof SearchCatalogResponses];
+
+export type GetCatalogPluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/catalog/{urn}';
+};
+
+export type GetCatalogPluginResponses = {
+    default: PluginDetailsDto;
+};
+
+export type GetCatalogPluginResponse = GetCatalogPluginResponses[keyof GetCatalogPluginResponses];
+
+export type GetInstalledPluginsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/plugins/installed';
+};
+
+export type GetInstalledPluginsResponses = {
+    default: InstalledPluginsDto;
+};
+
+export type GetInstalledPluginsResponse = GetInstalledPluginsResponses[keyof GetInstalledPluginsResponses];
+
+export type GetInstalledPluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/installed/{urn}';
+};
+
+export type GetInstalledPluginResponses = {
+    default: InstalledPluginDto;
+};
+
+export type GetInstalledPluginResponse = GetInstalledPluginResponses[keyof GetInstalledPluginResponses];
+
+export type InstallPluginData = {
+    body: InstallPluginBodyDto;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/install';
+};
+
+export type InstallPluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type InstallPluginResponse = InstallPluginResponses[keyof InstallPluginResponses];
+
+export type UpdatePluginData = {
+    body: UpdatePluginBodyDto;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/update';
+};
+
+export type UpdatePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type UpdatePluginResponse = UpdatePluginResponses[keyof UpdatePluginResponses];
+
+export type RemovePluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}';
+};
+
+export type RemovePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type RemovePluginResponse = RemovePluginResponses[keyof RemovePluginResponses];
+
+export type EnablePluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/enable';
+};
+
+export type EnablePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type EnablePluginResponse = EnablePluginResponses[keyof EnablePluginResponses];
+
+export type DisablePluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/disable';
+};
+
+export type DisablePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type DisablePluginResponse = DisablePluginResponses[keyof DisablePluginResponses];
+
+export type UpdateGlobalConfigData = {
+    body: UpdatePluginConfigBodyDto;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/config';
+};
+
+export type UpdateGlobalConfigResponses = {
+    default: PluginSuccessDto;
+};
+
+export type UpdateGlobalConfigResponse = UpdateGlobalConfigResponses[keyof UpdateGlobalConfigResponses];
 
 export type SeedDatabaseData = {
     body?: never;

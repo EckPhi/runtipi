@@ -22,14 +22,18 @@ export const TemplateSyncDialog = ({ appUrn, isOpen, onClose }: TemplateSyncDial
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'overview' | 'diff'>('overview');
 
-  const { data: diffData, isLoading } = useQuery({
+  const {
+    data: diffData,
+    isLoading,
+    error: diffError,
+  } = useQuery({
     queryKey: ['template-diff', appUrn],
-    queryFn: () => getTemplateDiff({ path: { urn: appUrn } }),
+    queryFn: () => getTemplateDiff({ path: { urn: appUrn }, throwOnError: true }),
     enabled: isOpen && Boolean(appUrn),
   });
 
   const syncMutation = useMutation({
-    mutationFn: () => syncWithTemplate({ path: { urn: appUrn } }),
+    mutationFn: () => syncWithTemplate({ path: { urn: appUrn }, throwOnError: true }),
     onSuccess: () => {
       toast.success(t('APP_SYNC_SUCCESS'));
       onClose();
@@ -54,16 +58,14 @@ export const TemplateSyncDialog = ({ appUrn, isOpen, onClose }: TemplateSyncDial
 
   const diff = diffData?.data;
 
-  if (!diff?.hasChanges) {
+  if (diffError || !diff?.hasChanges) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('APP_SYNC_TITLE')}</DialogTitle>
           </DialogHeader>
-          <DialogDescription>
-            <p>{t('APP_SYNC_NO_CHANGES')}</p>
-          </DialogDescription>
+          <DialogDescription>{diffError ? <p role="alert">{t('APP_SYNC_ERROR')}</p> : <p>{t('APP_SYNC_NO_CHANGES')}</p>}</DialogDescription>
           <DialogFooter>
             <Button onClick={onClose}>{t('CLOSE')}</Button>
           </DialogFooter>

@@ -13,6 +13,9 @@ import { MarketplaceService } from '../marketplace/marketplace.service';
 import { type PluginConfig, validatePluginConfig } from './plugin-config.helpers';
 import { PluginsRepository } from './plugins.repository';
 
+export type PluginIncompatibilityReason = 'min_tipi_version' | 'unavailable' | 'deprecated';
+export type PluginCompatibility = { compatible: boolean; minTipiVersion: string | null; reason: PluginIncompatibilityReason | null };
+
 @Injectable()
 export class PluginsService {
   constructor(
@@ -36,6 +39,25 @@ export class PluginsService {
     if (isBelowMinTipiVersion(this.config.get('version'), manifest.min_tipi_version)) {
       throw new TranslatableError('PLUGIN_ERROR_MIN_TIPI_VERSION', { id: urn, minVersion: manifest.min_tipi_version }, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  /**
+   * Whether a manifest can be installed on this instance, and why not. Shown in the store so incompatible plugins are
+   * listed with a reason instead of failing on install. The install and update checks stay authoritative.
+   */
+  public getCompatibility(manifest: PluginManifest): PluginCompatibility {
+    const minTipiVersion = manifest.min_tipi_version ?? null;
+    let reason: PluginIncompatibilityReason | null = null;
+
+    if (isBelowMinTipiVersion(this.config.get('version'), manifest.min_tipi_version)) {
+      reason = 'min_tipi_version';
+    } else if (!manifest.available) {
+      reason = 'unavailable';
+    } else if (manifest.deprecated) {
+      reason = 'deprecated';
+    }
+
+    return { compatible: reason === null, minTipiVersion, reason };
   }
 
   private validateGlobalConfig(urn: AppUrn, manifest: PluginManifest, input: PluginConfig) {
@@ -87,25 +109,35 @@ export class PluginsService {
     pageSize?: number;
     cursor?: string | null;
   }) {
-    const result = await this.marketplace.searchPlugins(params);
-    const installed = new Set((await this.repository.getPlugins()).map((row) => row.urn));
+    const rows = await this.repository.getPlugins();
+    const installed = new Set(rows.map((row) => row.urn));
+    const manifests = await Promise.all(rows.map((row) => this.marketplace.getInstalledPluginInfo(row.urn as AppUrn).catch(() => null)));
+    const result = await this.marketplace.searchPlugins(
+      params,
+      manifests.filter((manifest): manifest is PluginManifest => manifest !== null),
+    );
 
-    return { ...result, data: result.data.map((plugin) => ({ ...plugin, installed: installed.has(plugin.urn) })) };
+    return {
+      ...result,
+      data: result.data.map((plugin) => ({ ...plugin, installed: installed.has(plugin.urn), compatibility: this.getCompatibility(plugin) })),
+    };
   }
 
   public async getCatalogPlugin(urn: AppUrn) {
-    const info = await this.getStoreManifest(urn);
+    const catalogInfo = await this.getStoreManifest(urn);
+    const row = await this.repository.getPluginByUrn(urn);
+    const installed = row ? await this.toInstalledPlugin(row) : null;
+    const info = catalogInfo ?? installed?.info;
 
     if (!info) {
       throw new TranslatableError('PLUGIN_ERROR_NOT_FOUND', { id: urn }, HttpStatus.NOT_FOUND);
     }
 
-    const row = await this.repository.getPluginByUrn(urn);
-
     return {
       info,
-      installed: row ? await this.toInstalledPlugin(row) : null,
-      updateAvailable: row ? info.tipi_version > row.tipiVersion : false,
+      compatibility: this.getCompatibility(info),
+      installed,
+      updateAvailable: row && catalogInfo ? catalogInfo.tipi_version > row.tipiVersion : false,
     };
   }
 

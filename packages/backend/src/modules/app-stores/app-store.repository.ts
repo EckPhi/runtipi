@@ -1,5 +1,5 @@
 import { DatabaseService } from '@/core/database/database.service';
-import { app, appStore } from '@/core/database/drizzle/schema';
+import { app, appStore, plugin } from '@/core/database/drizzle/schema';
 import type { NewAppStore } from '@/core/database/drizzle/types';
 import { Injectable } from '@nestjs/common';
 import { and, asc, count, eq } from 'drizzle-orm';
@@ -90,6 +90,11 @@ export class AppStoreRepository {
 
   public async getAppCountForStore(slug: string) {
     const res = await this.databaseService.db.select({ count: count() }).from(app).where(eq(app.appStoreSlug, slug));
+    return res[0];
+  }
+
+  public async getPluginCountForStore(slug: string) {
+    const res = await this.databaseService.db.select({ count: count() }).from(plugin).where(eq(plugin.pluginStoreSlug, slug));
     return res[0];
   }
 }

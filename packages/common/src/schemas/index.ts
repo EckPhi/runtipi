@@ -13,6 +13,9 @@ import {
 import { APP_CATEGORIES, ARCHITECTURES, FIELD_TYPES, RANDOM_ENCODINGS, appInfoSchema, formFieldSchema, frontmatterSchema } from './app-info.js';
 import type { AppCategory, AppInfo, AppInfoInput, FieldType, FormField, RandomEncoding } from './app-info.js';
 
+import { PLUGIN_CAPABILITIES, pluginManifestSchema, pluginSettingsSchema } from './plugin-manifest.js';
+import type { PluginCapability, PluginManifest, PluginManifestInput, PluginSettings } from './plugin-manifest.js';
+
 import { type SSE, type Topic, sseSchema } from './sse.js';
 import { appJobSchema, type AppJob } from './app-job.js';
 
@@ -53,4 +56,11 @@ export {
   type ServicesSchema,
   appJobSchema,
   type AppJob,
+  PLUGIN_CAPABILITIES,
+  pluginManifestSchema,
+  pluginSettingsSchema,
+  type PluginCapability,
+  type PluginManifest,
+  type PluginManifestInput,
+  type PluginSettings,
 };

@@ -2449,6 +2449,373 @@
           "AgentCredentials"
         ]
       }
+    },
+    "/api/plugins/catalog/search": {
+      "get": {
+        "operationId": "searchCatalog",
+        "parameters": [
+          {
+            "name": "capability",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "backup-backend",
+                "compose",
+                "dashboard-widget"
+              ]
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^(?:(?!^-0$)-?(?:(?:0|[1-9]\\d*)))$"
+                }
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storeId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPluginsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/catalog/{urn}": {
+      "get": {
+        "operationId": "getCatalogPlugin",
+        "parameters": [
+          {
+            "name": "urn",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginDetailsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/installed": {
+      "get": {
+        "operationId": "getInstalledPlugins",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalledPluginsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/installed/{urn}": {
+      "get": {
+        "operationId": "getInstalledPlugin",
+        "parameters": [
+          {
+            "name": "urn",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalledPluginDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/{urn}/install": {
+      "post": {
+        "operationId": "installPlugin",
+        "parameters": [
+          {
+            "name": "urn",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallPluginBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginSuccessDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/{urn}/update": {
+      "post": {
+        "operationId": "updatePlugin",
+        "parameters": [
+          {
+            "name": "urn",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePluginBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginSuccessDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/{urn}": {
+      "delete": {
+        "operationId": "removePlugin",
+        "parameters": [
+          {
+            "name": "urn",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginSuccessDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/{urn}/enable": {
+      "post": {
+        "operationId": "enablePlugin",
+        "parameters": [
+          {
+            "name": "urn",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginSuccessDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/{urn}/disable": {
+      "post": {
+        "operationId": "disablePlugin",
+        "parameters": [
+          {
+            "name": "urn",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginSuccessDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
+    },
+    "/api/plugins/{urn}/config": {
+      "patch": {
+        "operationId": "updateGlobalConfig",
+        "parameters": [
+          {
+            "name": "urn",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePluginConfigBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginSuccessDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Plugins"
+        ]
+      }
     }
   },
   "info": {
@@ -5856,6 +6223,1774 @@
           "credential",
           "token"
         ]
+      },
+      "SearchPluginsDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "author": {
+                  "type": "string"
+                },
+                "available": {
+                  "type": "boolean"
+                },
+                "capabilities": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "enum": [
+                      "backup-backend",
+                      "compose",
+                      "dashboard-widget"
+                    ]
+                  }
+                },
+                "deprecated": {
+                  "type": "boolean"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "installed": {
+                  "type": "boolean"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "settings": {
+                  "type": "object",
+                  "properties": {
+                    "global": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "env_variable": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "required": {
+                            "type": "boolean"
+                          },
+                          "type": {
+                            "enum": [
+                              "boolean",
+                              "email",
+                              "fqdn",
+                              "fqdnip",
+                              "ip",
+                              "number",
+                              "password",
+                              "random",
+                              "text",
+                              "url"
+                            ]
+                          },
+                          "default": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "boolean"
+                              }
+                            ]
+                          },
+                          "encoding": {
+                            "enum": [
+                              "base64",
+                              "hex"
+                            ]
+                          },
+                          "hint": {
+                            "type": "string"
+                          },
+                          "max": {
+                            "type": "number"
+                          },
+                          "min": {
+                            "type": "number"
+                          },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "value"
+                              ]
+                            }
+                          },
+                          "pattern_error": {
+                            "type": "string"
+                          },
+                          "placeholder": {
+                            "type": "string"
+                          },
+                          "regex": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "env_variable",
+                          "label",
+                          "required",
+                          "type"
+                        ]
+                      }
+                    },
+                    "per_app": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "env_variable": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "required": {
+                            "type": "boolean"
+                          },
+                          "type": {
+                            "enum": [
+                              "boolean",
+                              "email",
+                              "fqdn",
+                              "fqdnip",
+                              "ip",
+                              "number",
+                              "password",
+                              "random",
+                              "text",
+                              "url"
+                            ]
+                          },
+                          "default": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "boolean"
+                              }
+                            ]
+                          },
+                          "encoding": {
+                            "enum": [
+                              "base64",
+                              "hex"
+                            ]
+                          },
+                          "hint": {
+                            "type": "string"
+                          },
+                          "max": {
+                            "type": "number"
+                          },
+                          "min": {
+                            "type": "number"
+                          },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "value"
+                              ]
+                            }
+                          },
+                          "pattern_error": {
+                            "type": "string"
+                          },
+                          "placeholder": {
+                            "type": "string"
+                          },
+                          "regex": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "env_variable",
+                          "label",
+                          "required",
+                          "type"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "global",
+                    "per_app"
+                  ],
+                  "additionalProperties": false
+                },
+                "short_desc": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "tipi_version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "urn": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "min_tipi_version": {
+                  "type": "string"
+                },
+                "website": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "author",
+                "available",
+                "capabilities",
+                "deprecated",
+                "description",
+                "id",
+                "installed",
+                "name",
+                "settings",
+                "short_desc",
+                "source",
+                "tipi_version",
+                "urn",
+                "version"
+              ]
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "nextCursor": {
+            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "total"
+        ]
+      },
+      "PluginDetailsDto": {
+        "type": "object",
+        "properties": {
+          "info": {
+            "type": "object",
+            "properties": {
+              "author": {
+                "type": "string"
+              },
+              "available": {
+                "type": "boolean"
+              },
+              "capabilities": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "enum": [
+                    "backup-backend",
+                    "compose",
+                    "dashboard-widget"
+                  ]
+                }
+              },
+              "deprecated": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "settings": {
+                "type": "object",
+                "properties": {
+                  "global": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "env_variable": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "required": {
+                          "type": "boolean"
+                        },
+                        "type": {
+                          "enum": [
+                            "boolean",
+                            "email",
+                            "fqdn",
+                            "fqdnip",
+                            "ip",
+                            "number",
+                            "password",
+                            "random",
+                            "text",
+                            "url"
+                          ]
+                        },
+                        "default": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "encoding": {
+                          "enum": [
+                            "base64",
+                            "hex"
+                          ]
+                        },
+                        "hint": {
+                          "type": "string"
+                        },
+                        "max": {
+                          "type": "number"
+                        },
+                        "min": {
+                          "type": "number"
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "value"
+                            ]
+                          }
+                        },
+                        "pattern_error": {
+                          "type": "string"
+                        },
+                        "placeholder": {
+                          "type": "string"
+                        },
+                        "regex": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "env_variable",
+                        "label",
+                        "required",
+                        "type"
+                      ]
+                    }
+                  },
+                  "per_app": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "env_variable": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "required": {
+                          "type": "boolean"
+                        },
+                        "type": {
+                          "enum": [
+                            "boolean",
+                            "email",
+                            "fqdn",
+                            "fqdnip",
+                            "ip",
+                            "number",
+                            "password",
+                            "random",
+                            "text",
+                            "url"
+                          ]
+                        },
+                        "default": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "encoding": {
+                          "enum": [
+                            "base64",
+                            "hex"
+                          ]
+                        },
+                        "hint": {
+                          "type": "string"
+                        },
+                        "max": {
+                          "type": "number"
+                        },
+                        "min": {
+                          "type": "number"
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "value"
+                            ]
+                          }
+                        },
+                        "pattern_error": {
+                          "type": "string"
+                        },
+                        "placeholder": {
+                          "type": "string"
+                        },
+                        "regex": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "env_variable",
+                        "label",
+                        "required",
+                        "type"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "global",
+                  "per_app"
+                ],
+                "additionalProperties": false
+              },
+              "short_desc": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "tipi_version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "urn": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1
+              },
+              "min_tipi_version": {
+                "type": "string"
+              },
+              "website": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "author",
+              "available",
+              "capabilities",
+              "deprecated",
+              "description",
+              "id",
+              "name",
+              "settings",
+              "short_desc",
+              "source",
+              "tipi_version",
+              "urn",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "installed": {
+            "type": "string",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "createdAt": {
+                    "type": "number"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "globalConfig": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    }
+                  },
+                  "id": {
+                    "type": "number"
+                  },
+                  "info": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "author": {
+                            "type": "string"
+                          },
+                          "available": {
+                            "type": "boolean"
+                          },
+                          "capabilities": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "enum": [
+                                "backup-backend",
+                                "compose",
+                                "dashboard-widget"
+                              ]
+                            }
+                          },
+                          "deprecated": {
+                            "type": "boolean"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "settings": {
+                            "type": "object",
+                            "properties": {
+                              "global": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "env_variable": {
+                                      "type": "string"
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    },
+                                    "required": {
+                                      "type": "boolean"
+                                    },
+                                    "type": {
+                                      "enum": [
+                                        "boolean",
+                                        "email",
+                                        "fqdn",
+                                        "fqdnip",
+                                        "ip",
+                                        "number",
+                                        "password",
+                                        "random",
+                                        "text",
+                                        "url"
+                                      ]
+                                    },
+                                    "default": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "boolean"
+                                        }
+                                      ]
+                                    },
+                                    "encoding": {
+                                      "enum": [
+                                        "base64",
+                                        "hex"
+                                      ]
+                                    },
+                                    "hint": {
+                                      "type": "string"
+                                    },
+                                    "max": {
+                                      "type": "number"
+                                    },
+                                    "min": {
+                                      "type": "number"
+                                    },
+                                    "options": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "label": {
+                                            "type": "string"
+                                          },
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "label",
+                                          "value"
+                                        ]
+                                      }
+                                    },
+                                    "pattern_error": {
+                                      "type": "string"
+                                    },
+                                    "placeholder": {
+                                      "type": "string"
+                                    },
+                                    "regex": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "env_variable",
+                                    "label",
+                                    "required",
+                                    "type"
+                                  ]
+                                }
+                              },
+                              "per_app": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "env_variable": {
+                                      "type": "string"
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    },
+                                    "required": {
+                                      "type": "boolean"
+                                    },
+                                    "type": {
+                                      "enum": [
+                                        "boolean",
+                                        "email",
+                                        "fqdn",
+                                        "fqdnip",
+                                        "ip",
+                                        "number",
+                                        "password",
+                                        "random",
+                                        "text",
+                                        "url"
+                                      ]
+                                    },
+                                    "default": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "boolean"
+                                        }
+                                      ]
+                                    },
+                                    "encoding": {
+                                      "enum": [
+                                        "base64",
+                                        "hex"
+                                      ]
+                                    },
+                                    "hint": {
+                                      "type": "string"
+                                    },
+                                    "max": {
+                                      "type": "number"
+                                    },
+                                    "min": {
+                                      "type": "number"
+                                    },
+                                    "options": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "label": {
+                                            "type": "string"
+                                          },
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "label",
+                                          "value"
+                                        ]
+                                      }
+                                    },
+                                    "pattern_error": {
+                                      "type": "string"
+                                    },
+                                    "placeholder": {
+                                      "type": "string"
+                                    },
+                                    "regex": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "env_variable",
+                                    "label",
+                                    "required",
+                                    "type"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "global",
+                              "per_app"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "short_desc": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "tipi_version": {
+                            "type": "integer",
+                            "minimum": 1
+                          },
+                          "urn": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "min_tipi_version": {
+                            "type": "string"
+                          },
+                          "website": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "author",
+                          "available",
+                          "capabilities",
+                          "deprecated",
+                          "description",
+                          "id",
+                          "name",
+                          "settings",
+                          "short_desc",
+                          "source",
+                          "tipi_version",
+                          "urn",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "installedVersion": {
+                    "type": "string"
+                  },
+                  "latestTipiVersion": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "latestVersion": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "pluginId": {
+                    "type": "string"
+                  },
+                  "pluginStoreSlug": {
+                    "type": "string"
+                  },
+                  "tipiVersion": {
+                    "type": "number"
+                  },
+                  "updateAvailable": {
+                    "type": "boolean"
+                  },
+                  "updatedAt": {
+                    "type": "number"
+                  },
+                  "urn": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "createdAt",
+                  "enabled",
+                  "globalConfig",
+                  "id",
+                  "info",
+                  "installedVersion",
+                  "latestTipiVersion",
+                  "latestVersion",
+                  "pluginId",
+                  "pluginStoreSlug",
+                  "tipiVersion",
+                  "updateAvailable",
+                  "updatedAt",
+                  "urn"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updateAvailable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "info",
+          "installed",
+          "updateAvailable"
+        ]
+      },
+      "InstalledPluginsDto": {
+        "type": "object",
+        "properties": {
+          "plugins": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "createdAt": {
+                  "type": "number"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "globalConfig": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  }
+                },
+                "id": {
+                  "type": "number"
+                },
+                "info": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "author": {
+                          "type": "string"
+                        },
+                        "available": {
+                          "type": "boolean"
+                        },
+                        "capabilities": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "enum": [
+                              "backup-backend",
+                              "compose",
+                              "dashboard-widget"
+                            ]
+                          }
+                        },
+                        "deprecated": {
+                          "type": "boolean"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "settings": {
+                          "type": "object",
+                          "properties": {
+                            "global": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "env_variable": {
+                                    "type": "string"
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "required": {
+                                    "type": "boolean"
+                                  },
+                                  "type": {
+                                    "enum": [
+                                      "boolean",
+                                      "email",
+                                      "fqdn",
+                                      "fqdnip",
+                                      "ip",
+                                      "number",
+                                      "password",
+                                      "random",
+                                      "text",
+                                      "url"
+                                    ]
+                                  },
+                                  "default": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      }
+                                    ]
+                                  },
+                                  "encoding": {
+                                    "enum": [
+                                      "base64",
+                                      "hex"
+                                    ]
+                                  },
+                                  "hint": {
+                                    "type": "string"
+                                  },
+                                  "max": {
+                                    "type": "number"
+                                  },
+                                  "min": {
+                                    "type": "number"
+                                  },
+                                  "options": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "label": {
+                                          "type": "string"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "label",
+                                        "value"
+                                      ]
+                                    }
+                                  },
+                                  "pattern_error": {
+                                    "type": "string"
+                                  },
+                                  "placeholder": {
+                                    "type": "string"
+                                  },
+                                  "regex": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "env_variable",
+                                  "label",
+                                  "required",
+                                  "type"
+                                ]
+                              }
+                            },
+                            "per_app": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "env_variable": {
+                                    "type": "string"
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "required": {
+                                    "type": "boolean"
+                                  },
+                                  "type": {
+                                    "enum": [
+                                      "boolean",
+                                      "email",
+                                      "fqdn",
+                                      "fqdnip",
+                                      "ip",
+                                      "number",
+                                      "password",
+                                      "random",
+                                      "text",
+                                      "url"
+                                    ]
+                                  },
+                                  "default": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      }
+                                    ]
+                                  },
+                                  "encoding": {
+                                    "enum": [
+                                      "base64",
+                                      "hex"
+                                    ]
+                                  },
+                                  "hint": {
+                                    "type": "string"
+                                  },
+                                  "max": {
+                                    "type": "number"
+                                  },
+                                  "min": {
+                                    "type": "number"
+                                  },
+                                  "options": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "label": {
+                                          "type": "string"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "label",
+                                        "value"
+                                      ]
+                                    }
+                                  },
+                                  "pattern_error": {
+                                    "type": "string"
+                                  },
+                                  "placeholder": {
+                                    "type": "string"
+                                  },
+                                  "regex": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "env_variable",
+                                  "label",
+                                  "required",
+                                  "type"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "global",
+                            "per_app"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "short_desc": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "tipi_version": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "urn": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "min_tipi_version": {
+                          "type": "string"
+                        },
+                        "website": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "author",
+                        "available",
+                        "capabilities",
+                        "deprecated",
+                        "description",
+                        "id",
+                        "name",
+                        "settings",
+                        "short_desc",
+                        "source",
+                        "tipi_version",
+                        "urn",
+                        "version"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "installedVersion": {
+                  "type": "string"
+                },
+                "latestTipiVersion": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "latestVersion": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "pluginId": {
+                  "type": "string"
+                },
+                "pluginStoreSlug": {
+                  "type": "string"
+                },
+                "tipiVersion": {
+                  "type": "number"
+                },
+                "updateAvailable": {
+                  "type": "boolean"
+                },
+                "updatedAt": {
+                  "type": "number"
+                },
+                "urn": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "createdAt",
+                "enabled",
+                "globalConfig",
+                "id",
+                "info",
+                "installedVersion",
+                "latestTipiVersion",
+                "latestVersion",
+                "pluginId",
+                "pluginStoreSlug",
+                "tipiVersion",
+                "updateAvailable",
+                "updatedAt",
+                "urn"
+              ]
+            }
+          }
+        },
+        "required": [
+          "plugins"
+        ]
+      },
+      "InstalledPluginDto": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "number"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "globalConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "id": {
+            "type": "number"
+          },
+          "info": {
+            "type": "string",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "author": {
+                    "type": "string"
+                  },
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "capabilities": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "enum": [
+                        "backup-backend",
+                        "compose",
+                        "dashboard-widget"
+                      ]
+                    }
+                  },
+                  "deprecated": {
+                    "type": "boolean"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "settings": {
+                    "type": "object",
+                    "properties": {
+                      "global": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "env_variable": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "required": {
+                              "type": "boolean"
+                            },
+                            "type": {
+                              "enum": [
+                                "boolean",
+                                "email",
+                                "fqdn",
+                                "fqdnip",
+                                "ip",
+                                "number",
+                                "password",
+                                "random",
+                                "text",
+                                "url"
+                              ]
+                            },
+                            "default": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "boolean"
+                                }
+                              ]
+                            },
+                            "encoding": {
+                              "enum": [
+                                "base64",
+                                "hex"
+                              ]
+                            },
+                            "hint": {
+                              "type": "string"
+                            },
+                            "max": {
+                              "type": "number"
+                            },
+                            "min": {
+                              "type": "number"
+                            },
+                            "options": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "label",
+                                  "value"
+                                ]
+                              }
+                            },
+                            "pattern_error": {
+                              "type": "string"
+                            },
+                            "placeholder": {
+                              "type": "string"
+                            },
+                            "regex": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "env_variable",
+                            "label",
+                            "required",
+                            "type"
+                          ]
+                        }
+                      },
+                      "per_app": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "env_variable": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "required": {
+                              "type": "boolean"
+                            },
+                            "type": {
+                              "enum": [
+                                "boolean",
+                                "email",
+                                "fqdn",
+                                "fqdnip",
+                                "ip",
+                                "number",
+                                "password",
+                                "random",
+                                "text",
+                                "url"
+                              ]
+                            },
+                            "default": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "boolean"
+                                }
+                              ]
+                            },
+                            "encoding": {
+                              "enum": [
+                                "base64",
+                                "hex"
+                              ]
+                            },
+                            "hint": {
+                              "type": "string"
+                            },
+                            "max": {
+                              "type": "number"
+                            },
+                            "min": {
+                              "type": "number"
+                            },
+                            "options": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "label",
+                                  "value"
+                                ]
+                              }
+                            },
+                            "pattern_error": {
+                              "type": "string"
+                            },
+                            "placeholder": {
+                              "type": "string"
+                            },
+                            "regex": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "env_variable",
+                            "label",
+                            "required",
+                            "type"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "global",
+                      "per_app"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "short_desc": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "tipi_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "urn": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "min_tipi_version": {
+                    "type": "string"
+                  },
+                  "website": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "author",
+                  "available",
+                  "capabilities",
+                  "deprecated",
+                  "description",
+                  "id",
+                  "name",
+                  "settings",
+                  "short_desc",
+                  "source",
+                  "tipi_version",
+                  "urn",
+                  "version"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "installedVersion": {
+            "type": "string"
+          },
+          "latestTipiVersion": {
+            "type": "string",
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latestVersion": {
+            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "pluginStoreSlug": {
+            "type": "string"
+          },
+          "tipiVersion": {
+            "type": "number"
+          },
+          "updateAvailable": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "number"
+          },
+          "urn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdAt",
+          "enabled",
+          "globalConfig",
+          "id",
+          "info",
+          "installedVersion",
+          "latestTipiVersion",
+          "latestVersion",
+          "pluginId",
+          "pluginStoreSlug",
+          "tipiVersion",
+          "updateAvailable",
+          "updatedAt",
+          "urn"
+        ]
+      },
+      "InstallPluginBodyDto": {
+        "type": "object",
+        "properties": {
+          "globalConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "PluginSuccessDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "UpdatePluginConfigBodyDto": {
+        "type": "object",
+        "properties": {
+          "globalConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "globalConfig"
+        ]
+      },
+      "UpdatePluginBodyDto": {
+        "type": "object",
+        "properties": {
+          "globalConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          }
+        }
       }
     }
   }

@@ -158,6 +158,32 @@ export const appStore = pgTable('app_store', {
     .default(sql`extract(epoch from now())`),
 });
 
+export const plugin = pgTable('plugin', {
+  id: serial().primaryKey().notNull(),
+  urn: varchar().notNull().unique(),
+  pluginId: varchar('plugin_id').notNull(),
+  pluginStoreSlug: varchar('plugin_store_slug')
+    .notNull()
+    .references(() => appStore.slug),
+  installedVersion: varchar('installed_version').notNull(),
+  tipiVersion: integer('tipi_version').notNull(),
+  enabled: boolean().default(true).notNull(),
+  globalConfig: jsonb('global_config').$type<Record<string, string | number | boolean>>().default({}).notNull(),
+  createdAt: integer('created_at')
+    .notNull()
+    .default(sql`extract(epoch from now())`),
+  updatedAt: integer('updated_at')
+    .notNull()
+    .default(sql`extract(epoch from now())`),
+});
+
+export const pluginRelations = relations(plugin, ({ one }) => ({
+  appStore: one(appStore, {
+    fields: [plugin.pluginStoreSlug],
+    references: [appStore.slug],
+  }),
+}));
+
 export const agentCredential = pgTable('agent_credential', {
   id: varchar().primaryKey().notNull(),
   userId: integer('user_id')

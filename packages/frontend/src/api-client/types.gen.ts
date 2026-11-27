@@ -630,15 +630,7 @@ export type CreateCustomAppDto = {
                     internal_port?: number | string;
                     is_main?: boolean;
                 };
-                [key: string]: unknown | string | {
-                    [key: string]: number | string | boolean;
-                } | Array<string> | {
-                    [key: string]: unknown;
-                } | Array<string> | Array<unknown> | {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                } | undefined;
+                [key: string]: unknown;
             };
         };
         'x-runtipi': {
@@ -660,81 +652,16 @@ export type CreateCustomAppDto = {
                             internal_port?: number | string;
                             is_main?: boolean;
                         };
-                        [key: string]: unknown | string | {
-                            [key: string]: number | string | boolean;
-                        } | Array<string> | {
-                            [key: string]: unknown;
-                        } | Array<string> | Array<unknown> | {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        } | undefined;
+                        [key: string]: unknown;
                     };
                 };
             }>;
+            migrations?: never;
         };
         networks?: {
             [key: string]: unknown;
         };
-        [key: string]: unknown | {
-            [key: string]: {
-                image: string;
-                labels?: {
-                    [key: string]: number | string | boolean;
-                } | Array<string>;
-                networks?: {
-                    [key: string]: unknown;
-                } | Array<string>;
-                ports?: Array<unknown>;
-                'x-runtipi'?: {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                };
-                [key: string]: unknown | string | {
-                    [key: string]: number | string | boolean;
-                } | Array<string> | {
-                    [key: string]: unknown;
-                } | Array<string> | Array<unknown> | {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                } | undefined;
-            };
-        } | {
-            schema_version: 1 | 2;
-            overrides?: Array<{
-                architecture: 'amd64' | 'arm64';
-                services: {
-                    [key: string]: {
-                        image: string;
-                        labels?: {
-                            [key: string]: number | string | boolean;
-                        } | Array<string>;
-                        networks?: {
-                            [key: string]: unknown;
-                        } | Array<string>;
-                        ports?: Array<unknown>;
-                        'x-runtipi'?: {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        };
-                        [key: string]: unknown | string | {
-                            [key: string]: number | string | boolean;
-                        } | Array<string> | {
-                            [key: string]: unknown;
-                        } | Array<string> | Array<unknown> | {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        } | undefined;
-                    };
-                };
-            }>;
-        } | {
-            [key: string]: unknown;
-        } | undefined;
+        [key: string]: unknown;
     };
     name: string;
 };
@@ -762,15 +689,7 @@ export type UpdateCustomAppDto = {
                     internal_port?: number | string;
                     is_main?: boolean;
                 };
-                [key: string]: unknown | string | {
-                    [key: string]: number | string | boolean;
-                } | Array<string> | {
-                    [key: string]: unknown;
-                } | Array<string> | Array<unknown> | {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                } | undefined;
+                [key: string]: unknown;
             };
         };
         'x-runtipi': {
@@ -792,81 +711,16 @@ export type UpdateCustomAppDto = {
                             internal_port?: number | string;
                             is_main?: boolean;
                         };
-                        [key: string]: unknown | string | {
-                            [key: string]: number | string | boolean;
-                        } | Array<string> | {
-                            [key: string]: unknown;
-                        } | Array<string> | Array<unknown> | {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        } | undefined;
+                        [key: string]: unknown;
                     };
                 };
             }>;
+            migrations?: never;
         };
         networks?: {
             [key: string]: unknown;
         };
-        [key: string]: unknown | {
-            [key: string]: {
-                image: string;
-                labels?: {
-                    [key: string]: number | string | boolean;
-                } | Array<string>;
-                networks?: {
-                    [key: string]: unknown;
-                } | Array<string>;
-                ports?: Array<unknown>;
-                'x-runtipi'?: {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                };
-                [key: string]: unknown | string | {
-                    [key: string]: number | string | boolean;
-                } | Array<string> | {
-                    [key: string]: unknown;
-                } | Array<string> | Array<unknown> | {
-                    add_to_main_network?: boolean;
-                    internal_port?: number | string;
-                    is_main?: boolean;
-                } | undefined;
-            };
-        } | {
-            schema_version: 1 | 2;
-            overrides?: Array<{
-                architecture: 'amd64' | 'arm64';
-                services: {
-                    [key: string]: {
-                        image: string;
-                        labels?: {
-                            [key: string]: number | string | boolean;
-                        } | Array<string>;
-                        networks?: {
-                            [key: string]: unknown;
-                        } | Array<string>;
-                        ports?: Array<unknown>;
-                        'x-runtipi'?: {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        };
-                        [key: string]: unknown | string | {
-                            [key: string]: number | string | boolean;
-                        } | Array<string> | {
-                            [key: string]: unknown;
-                        } | Array<string> | Array<unknown> | {
-                            add_to_main_network?: boolean;
-                            internal_port?: number | string;
-                            is_main?: boolean;
-                        } | undefined;
-                    };
-                };
-            }>;
-        } | {
-            [key: string]: unknown;
-        } | undefined;
+        [key: string]: unknown;
     };
 };
 
@@ -892,6 +746,400 @@ export type TemplateDiffDto = {
     templateVersion: number;
     current?: string;
     template?: string;
+};
+
+export type AgentCredentialsDto = {
+    credentials: Array<{
+        createdAt: number;
+        expiresAt: number;
+        id: string;
+        lastUsedAt: number | null;
+        name: string;
+    }>;
+};
+
+export type CreateAgentCredentialBody = {
+    name: string;
+    password: string;
+    expiresInDays?: number;
+};
+
+export type CreatedAgentCredentialDto = {
+    credential: {
+        createdAt: number;
+        expiresAt: number;
+        id: string;
+        lastUsedAt: number | null;
+        name: string;
+    };
+    token: string;
+};
+
+export type SearchPluginsDto = {
+    data: Array<{
+        author: string;
+        available: boolean;
+        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+        compatibility: {
+            compatible: boolean;
+            minTipiVersion: string | null;
+            reason: 'deprecated' | 'min_tipi_version' | 'unavailable' | null;
+        };
+        deprecated: boolean;
+        description: string;
+        id: string;
+        installed: boolean;
+        name: string;
+        settings: {
+            global: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+            per_app: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+        };
+        short_desc: string;
+        source: string;
+        tipi_version: number;
+        urn: string;
+        version: string;
+        min_tipi_version?: string;
+        website?: string;
+    }>;
+    total: number;
+    nextCursor?: string | null;
+};
+
+export type PluginDetailsDto = {
+    compatibility: {
+        compatible: boolean;
+        minTipiVersion: string | null;
+        reason: 'deprecated' | 'min_tipi_version' | 'unavailable' | null;
+    };
+    info: {
+        author: string;
+        available: boolean;
+        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+        deprecated: boolean;
+        description: string;
+        id: string;
+        name: string;
+        settings: {
+            global: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+            per_app: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+        };
+        short_desc: string;
+        source: string;
+        tipi_version: number;
+        urn: string;
+        version: string;
+        min_tipi_version?: string;
+        website?: string;
+    };
+    installed: {
+        createdAt: number;
+        enabled: boolean;
+        globalConfig: {
+            [key: string]: number | string | boolean;
+        };
+        id: number;
+        info: {
+            author: string;
+            available: boolean;
+            capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+            deprecated: boolean;
+            description: string;
+            id: string;
+            name: string;
+            settings: {
+                global: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+                per_app: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+            };
+            short_desc: string;
+            source: string;
+            tipi_version: number;
+            urn: string;
+            version: string;
+            min_tipi_version?: string;
+            website?: string;
+        } | null;
+        installedVersion: string;
+        latestTipiVersion: number | null;
+        latestVersion: string | null;
+        pluginId: string;
+        pluginStoreSlug: string;
+        tipiVersion: number;
+        updateAvailable: boolean;
+        updatedAt: number;
+        urn: string;
+    } | null;
+    updateAvailable: boolean;
+};
+
+export type InstalledPluginsDto = {
+    plugins: Array<{
+        createdAt: number;
+        enabled: boolean;
+        globalConfig: {
+            [key: string]: number | string | boolean;
+        };
+        id: number;
+        info: {
+            author: string;
+            available: boolean;
+            capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+            deprecated: boolean;
+            description: string;
+            id: string;
+            name: string;
+            settings: {
+                global: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+                per_app: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+            };
+            short_desc: string;
+            source: string;
+            tipi_version: number;
+            urn: string;
+            version: string;
+            min_tipi_version?: string;
+            website?: string;
+        } | null;
+        installedVersion: string;
+        latestTipiVersion: number | null;
+        latestVersion: string | null;
+        pluginId: string;
+        pluginStoreSlug: string;
+        tipiVersion: number;
+        updateAvailable: boolean;
+        updatedAt: number;
+        urn: string;
+    }>;
+};
+
+export type InstalledPluginDto = {
+    createdAt: number;
+    enabled: boolean;
+    globalConfig: {
+        [key: string]: number | string | boolean;
+    };
+    id: number;
+    info: {
+        author: string;
+        available: boolean;
+        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+        deprecated: boolean;
+        description: string;
+        id: string;
+        name: string;
+        settings: {
+            global: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+            per_app: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+        };
+        short_desc: string;
+        source: string;
+        tipi_version: number;
+        urn: string;
+        version: string;
+        min_tipi_version?: string;
+        website?: string;
+    } | null;
+    installedVersion: string;
+    latestTipiVersion: number | null;
+    latestVersion: string | null;
+    pluginId: string;
+    pluginStoreSlug: string;
+    tipiVersion: number;
+    updateAvailable: boolean;
+    updatedAt: number;
+    urn: string;
+};
+
+export type InstallPluginBodyDto = {
+    globalConfig?: {
+        [key: string]: number | string | boolean;
+    };
+};
+
+export type PluginSuccessDto = {
+    success: boolean;
+};
+
+export type UpdatePluginConfigBodyDto = {
+    globalConfig: {
+        [key: string]: number | string | boolean;
+    };
+};
+
+export type UpdatePluginBodyDto = {
+    globalConfig?: {
+        [key: string]: number | string | boolean;
+    };
 };
 
 export type UserContextData = {
@@ -1749,19 +1997,19 @@ export type CheckErrors = {
         info?: {
             [key: string]: {
                 status: string;
-                [key: string]: unknown | string;
+                [key: string]: unknown;
             };
         };
         error?: {
             [key: string]: {
                 status: string;
-                [key: string]: unknown | string;
+                [key: string]: unknown;
             };
         };
         details?: {
             [key: string]: {
                 status: string;
-                [key: string]: unknown | string;
+                [key: string]: unknown;
             };
         };
     };
@@ -1778,19 +2026,19 @@ export type CheckResponses = {
         info?: {
             [key: string]: {
                 status: string;
-                [key: string]: unknown | string;
+                [key: string]: unknown;
             };
         };
         error?: {
             [key: string]: {
                 status: string;
-                [key: string]: unknown | string;
+                [key: string]: unknown;
             };
         };
         details?: {
             [key: string]: {
                 status: string;
-                [key: string]: unknown | string;
+                [key: string]: unknown;
             };
         };
     };
@@ -2045,3 +2293,194 @@ export type UninstallAllAppsData = {
 export type UninstallAllAppsResponses = {
     201: unknown;
 };
+
+export type ListAgentCredentialsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/agent-credentials';
+};
+
+export type ListAgentCredentialsResponses = {
+    default: AgentCredentialsDto;
+};
+
+export type ListAgentCredentialsResponse = ListAgentCredentialsResponses[keyof ListAgentCredentialsResponses];
+
+export type CreateAgentCredentialData = {
+    body: CreateAgentCredentialBody;
+    path?: never;
+    query?: never;
+    url: '/api/agent-credentials';
+};
+
+export type CreateAgentCredentialResponses = {
+    default: CreatedAgentCredentialDto;
+};
+
+export type CreateAgentCredentialResponse = CreateAgentCredentialResponses[keyof CreateAgentCredentialResponses];
+
+export type RevokeAgentCredentialData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/agent-credentials/{id}';
+};
+
+export type RevokeAgentCredentialResponses = {
+    200: unknown;
+};
+
+export type SearchCatalogData = {
+    body?: never;
+    path?: never;
+    query?: {
+        capability?: 'backup-backend' | 'compose' | 'dashboard-widget';
+        cursor?: string;
+        pageSize?: number | string;
+        search?: string;
+        storeId?: string;
+    };
+    url: '/api/plugins/catalog/search';
+};
+
+export type SearchCatalogResponses = {
+    default: SearchPluginsDto;
+};
+
+export type SearchCatalogResponse = SearchCatalogResponses[keyof SearchCatalogResponses];
+
+export type GetCatalogPluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/catalog/{urn}';
+};
+
+export type GetCatalogPluginResponses = {
+    default: PluginDetailsDto;
+};
+
+export type GetCatalogPluginResponse = GetCatalogPluginResponses[keyof GetCatalogPluginResponses];
+
+export type GetInstalledPluginsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/plugins/installed';
+};
+
+export type GetInstalledPluginsResponses = {
+    default: InstalledPluginsDto;
+};
+
+export type GetInstalledPluginsResponse = GetInstalledPluginsResponses[keyof GetInstalledPluginsResponses];
+
+export type GetInstalledPluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/installed/{urn}';
+};
+
+export type GetInstalledPluginResponses = {
+    default: InstalledPluginDto;
+};
+
+export type GetInstalledPluginResponse = GetInstalledPluginResponses[keyof GetInstalledPluginResponses];
+
+export type InstallPluginData = {
+    body: InstallPluginBodyDto;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/install';
+};
+
+export type InstallPluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type InstallPluginResponse = InstallPluginResponses[keyof InstallPluginResponses];
+
+export type UpdatePluginData = {
+    body: UpdatePluginBodyDto;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/update';
+};
+
+export type UpdatePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type UpdatePluginResponse = UpdatePluginResponses[keyof UpdatePluginResponses];
+
+export type RemovePluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}';
+};
+
+export type RemovePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type RemovePluginResponse = RemovePluginResponses[keyof RemovePluginResponses];
+
+export type EnablePluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/enable';
+};
+
+export type EnablePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type EnablePluginResponse = EnablePluginResponses[keyof EnablePluginResponses];
+
+export type DisablePluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/disable';
+};
+
+export type DisablePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type DisablePluginResponse = DisablePluginResponses[keyof DisablePluginResponses];
+
+export type UpdateGlobalConfigData = {
+    body: UpdatePluginConfigBodyDto;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/config';
+};
+
+export type UpdateGlobalConfigResponses = {
+    default: PluginSuccessDto;
+};
+
+export type UpdateGlobalConfigResponse = UpdateGlobalConfigResponses[keyof UpdateGlobalConfigResponses];

@@ -110,6 +110,29 @@ describe('PluginsService', () => {
       expect((await service.searchCatalog({})).data.map((plugin) => plugin.urn)).toEqual(['demo:store']);
     });
 
+    it('lists incompatible plugins with the reason they cannot be installed', async () => {
+      await createPluginInStore('store', { id: 'future', min_tipi_version: '9.0.0' });
+      const { service } = await setup({ version: '4.1.0' });
+
+      const FUTURE = 'future:store' as AppUrn;
+      const { data } = await service.searchCatalog({});
+      expect(data.find((plugin) => plugin.urn === FUTURE)?.compatibility).toEqual({
+        compatible: false,
+        minTipiVersion: '9.0.0',
+        reason: 'min_tipi_version',
+      });
+      expect(data.find((plugin) => plugin.urn === URN)?.compatibility).toEqual({ compatible: true, minTipiVersion: null, reason: null });
+      expect((await service.getCatalogPlugin(FUTURE)).compatibility).toMatchObject({ compatible: false, reason: 'min_tipi_version' });
+    });
+
+    it('reports deprecated and unavailable manifests as incompatible', async () => {
+      const { service } = await setup();
+      const base = (await service.getCatalogPlugin(URN)).info;
+
+      expect(service.getCompatibility({ ...base, deprecated: true }).reason).toBe('deprecated');
+      expect(service.getCompatibility({ ...base, available: false }).reason).toBe('unavailable');
+    });
+
     it('returns details of a catalog plugin and 404s for an unknown one', async () => {
       const { service } = await setup();
 

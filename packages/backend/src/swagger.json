@@ -6249,6 +6249,45 @@
                     ]
                   }
                 },
+                "compatibility": {
+                  "type": "object",
+                  "properties": {
+                    "compatible": {
+                      "type": "boolean"
+                    },
+                    "minTipiVersion": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "reason": {
+                      "anyOf": [
+                        {
+                          "const": "deprecated"
+                        },
+                        {
+                          "const": "min_tipi_version"
+                        },
+                        {
+                          "const": "unavailable"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "compatible",
+                    "minTipiVersion",
+                    "reason"
+                  ]
+                },
                 "deprecated": {
                   "type": "boolean"
                 },
@@ -6488,6 +6527,7 @@
                 "author",
                 "available",
                 "capabilities",
+                "compatibility",
                 "deprecated",
                 "description",
                 "id",
@@ -6525,6 +6565,45 @@
       "PluginDetailsDto": {
         "type": "object",
         "properties": {
+          "compatibility": {
+            "type": "object",
+            "properties": {
+              "compatible": {
+                "type": "boolean"
+              },
+              "minTipiVersion": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "const": "deprecated"
+                  },
+                  {
+                    "const": "min_tipi_version"
+                  },
+                  {
+                    "const": "unavailable"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "compatible",
+              "minTipiVersion",
+              "reason"
+            ]
+          },
           "info": {
             "type": "object",
             "properties": {
@@ -7170,6 +7249,7 @@
           }
         },
         "required": [
+          "compatibility",
           "info",
           "installed",
           "updateAvailable"

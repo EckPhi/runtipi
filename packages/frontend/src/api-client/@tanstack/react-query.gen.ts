@@ -127,190 +127,6 @@ export const downloadLocalCertificateOptions = (options?: Options<DownloadLocalC
     queryKey: downloadLocalCertificateQueryKey(options)
 });
 
-export const getTranslationQueryKey = (options: Options<GetTranslationData>) => createQueryKey('getTranslation', options);
-
-export const getTranslationOptions = (options: Options<GetTranslationData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof getTranslationQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getTranslation({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getTranslationQueryKey(options)
-});
-
-export const loginMutation = (options?: Partial<Options<LoginData>>): UseMutationOptions<LoginResponse, DefaultError, Options<LoginData>> => {
-    const mutationOptions: UseMutationOptions<LoginResponse, DefaultError, Options<LoginData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await login({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const verifyTotpMutation = (options?: Partial<Options<VerifyTotpData>>): UseMutationOptions<VerifyTotpResponse, DefaultError, Options<VerifyTotpData>> => {
-    const mutationOptions: UseMutationOptions<VerifyTotpResponse, DefaultError, Options<VerifyTotpData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await verifyTotp({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const registerMutation = (options?: Partial<Options<RegisterData>>): UseMutationOptions<RegisterResponse, DefaultError, Options<RegisterData>> => {
-    const mutationOptions: UseMutationOptions<RegisterResponse, DefaultError, Options<RegisterData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await register({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const logoutMutation = (options?: Partial<Options<LogoutData>>): UseMutationOptions<unknown, DefaultError, Options<LogoutData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<LogoutData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await logout({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const forwardAuthMutation = (options?: Partial<Options<ForwardAuthData>>): UseMutationOptions<unknown, DefaultError, Options<ForwardAuthData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ForwardAuthData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await forwardAuth({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const changeUsernameMutation = (options?: Partial<Options<ChangeUsernameData>>): UseMutationOptions<unknown, DefaultError, Options<ChangeUsernameData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ChangeUsernameData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await changeUsername({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const changePasswordMutation = (options?: Partial<Options<ChangePasswordData>>): UseMutationOptions<unknown, DefaultError, Options<ChangePasswordData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ChangePasswordData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await changePassword({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const getTotpUriMutation = (options?: Partial<Options<GetTotpUriData>>): UseMutationOptions<GetTotpUriResponse, DefaultError, Options<GetTotpUriData>> => {
-    const mutationOptions: UseMutationOptions<GetTotpUriResponse, DefaultError, Options<GetTotpUriData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await getTotpUri({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const setupTotpMutation = (options?: Partial<Options<SetupTotpData>>): UseMutationOptions<unknown, DefaultError, Options<SetupTotpData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SetupTotpData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await setupTotp({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const disableTotpMutation = (options?: Partial<Options<DisableTotpData>>): UseMutationOptions<unknown, DefaultError, Options<DisableTotpData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DisableTotpData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await disableTotp({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const resetPasswordMutation = (options?: Partial<Options<ResetPasswordData>>): UseMutationOptions<ResetPasswordResponse, DefaultError, Options<ResetPasswordData>> => {
-    const mutationOptions: UseMutationOptions<ResetPasswordResponse, DefaultError, Options<ResetPasswordData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await resetPassword({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const traefikQueryKey = (options?: Options<TraefikData>) => createQueryKey('traefik', options);
-
-export const traefikOptions = (options?: Options<TraefikData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof traefikQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await traefik({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: traefikQueryKey(options)
-});
-
 export const getInstalledAppsQueryKey = (options?: Options<GetInstalledAppsData>) => createQueryKey('getInstalledApps', options);
 
 export const getInstalledAppsOptions = (options?: Options<GetInstalledAppsData>) => queryOptions<GetInstalledAppsResponse, DefaultError, GetInstalledAppsResponse, ReturnType<typeof getInstalledAppsQueryKey>>({
@@ -599,6 +415,190 @@ export const updateAppStoreMutation = (options?: Partial<Options<UpdateAppStoreD
     };
     return mutationOptions;
 };
+
+export const getTranslationQueryKey = (options: Options<GetTranslationData>) => createQueryKey('getTranslation', options);
+
+export const getTranslationOptions = (options: Options<GetTranslationData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof getTranslationQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getTranslation({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getTranslationQueryKey(options)
+});
+
+export const loginMutation = (options?: Partial<Options<LoginData>>): UseMutationOptions<LoginResponse, DefaultError, Options<LoginData>> => {
+    const mutationOptions: UseMutationOptions<LoginResponse, DefaultError, Options<LoginData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await login({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const verifyTotpMutation = (options?: Partial<Options<VerifyTotpData>>): UseMutationOptions<VerifyTotpResponse, DefaultError, Options<VerifyTotpData>> => {
+    const mutationOptions: UseMutationOptions<VerifyTotpResponse, DefaultError, Options<VerifyTotpData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await verifyTotp({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const registerMutation = (options?: Partial<Options<RegisterData>>): UseMutationOptions<RegisterResponse, DefaultError, Options<RegisterData>> => {
+    const mutationOptions: UseMutationOptions<RegisterResponse, DefaultError, Options<RegisterData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await register({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const logoutMutation = (options?: Partial<Options<LogoutData>>): UseMutationOptions<unknown, DefaultError, Options<LogoutData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<LogoutData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await logout({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const forwardAuthMutation = (options?: Partial<Options<ForwardAuthData>>): UseMutationOptions<unknown, DefaultError, Options<ForwardAuthData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ForwardAuthData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await forwardAuth({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const changeUsernameMutation = (options?: Partial<Options<ChangeUsernameData>>): UseMutationOptions<unknown, DefaultError, Options<ChangeUsernameData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ChangeUsernameData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await changeUsername({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const changePasswordMutation = (options?: Partial<Options<ChangePasswordData>>): UseMutationOptions<unknown, DefaultError, Options<ChangePasswordData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<ChangePasswordData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await changePassword({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getTotpUriMutation = (options?: Partial<Options<GetTotpUriData>>): UseMutationOptions<GetTotpUriResponse, DefaultError, Options<GetTotpUriData>> => {
+    const mutationOptions: UseMutationOptions<GetTotpUriResponse, DefaultError, Options<GetTotpUriData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await getTotpUri({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const setupTotpMutation = (options?: Partial<Options<SetupTotpData>>): UseMutationOptions<unknown, DefaultError, Options<SetupTotpData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SetupTotpData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await setupTotp({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const disableTotpMutation = (options?: Partial<Options<DisableTotpData>>): UseMutationOptions<unknown, DefaultError, Options<DisableTotpData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<DisableTotpData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await disableTotp({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const resetPasswordMutation = (options?: Partial<Options<ResetPasswordData>>): UseMutationOptions<ResetPasswordResponse, DefaultError, Options<ResetPasswordData>> => {
+    const mutationOptions: UseMutationOptions<ResetPasswordResponse, DefaultError, Options<ResetPasswordData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await resetPassword({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const traefikQueryKey = (options?: Options<TraefikData>) => createQueryKey('traefik', options);
+
+export const traefikOptions = (options?: Options<TraefikData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof traefikQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await traefik({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: traefikQueryKey(options)
+});
 
 export const getAppJobQueryKey = (options: Options<GetAppJobData>) => createQueryKey('getAppJob', options);
 
@@ -1225,104 +1225,6 @@ export const syncWithTemplateMutation = (options?: Partial<Options<SyncWithTempl
     return mutationOptions;
 };
 
-export const seedDatabaseMutation = (options?: Partial<Options<SeedDatabaseData>>): UseMutationOptions<unknown, DefaultError, Options<SeedDatabaseData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SeedDatabaseData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await seedDatabase({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const setAllAppUpdateAvailableMutation = (options?: Partial<Options<SetAllAppUpdateAvailableData>>): UseMutationOptions<unknown, DefaultError, Options<SetAllAppUpdateAvailableData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SetAllAppUpdateAvailableData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await setAllAppUpdateAvailable({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const setAllAppSubnetToNullMutation = (options?: Partial<Options<SetAllAppSubnetToNullData>>): UseMutationOptions<unknown, DefaultError, Options<SetAllAppSubnetToNullData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SetAllAppSubnetToNullData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await setAllAppSubnetToNull({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const startAllApps2Mutation = (options?: Partial<Options<StartAllApps2Data>>): UseMutationOptions<unknown, DefaultError, Options<StartAllApps2Data>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<StartAllApps2Data>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await startAllApps2({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const backupAllAppsMutation = (options?: Partial<Options<BackupAllAppsData>>): UseMutationOptions<unknown, DefaultError, Options<BackupAllAppsData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<BackupAllAppsData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await backupAllApps({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const incrementAllAppVersionsMutation = (options?: Partial<Options<IncrementAllAppVersionsData>>): UseMutationOptions<unknown, DefaultError, Options<IncrementAllAppVersionsData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<IncrementAllAppVersionsData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await incrementAllAppVersions({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const uninstallAllAppsMutation = (options?: Partial<Options<UninstallAllAppsData>>): UseMutationOptions<unknown, DefaultError, Options<UninstallAllAppsData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<UninstallAllAppsData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await uninstallAllApps({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
 export const listAgentCredentialsQueryKey = (options?: Options<ListAgentCredentialsData>) => createQueryKey('listAgentCredentials', options);
 
 export const listAgentCredentialsOptions = (options?: Options<ListAgentCredentialsData>) => queryOptions<ListAgentCredentialsResponse, DefaultError, ListAgentCredentialsResponse, ReturnType<typeof listAgentCredentialsQueryKey>>({
@@ -1527,6 +1429,104 @@ export const updateGlobalConfigMutation = (options?: Partial<Options<UpdateGloba
     const mutationOptions: UseMutationOptions<UpdateGlobalConfigResponse, DefaultError, Options<UpdateGlobalConfigData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await updateGlobalConfig({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const seedDatabaseMutation = (options?: Partial<Options<SeedDatabaseData>>): UseMutationOptions<unknown, DefaultError, Options<SeedDatabaseData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SeedDatabaseData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await seedDatabase({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const setAllAppUpdateAvailableMutation = (options?: Partial<Options<SetAllAppUpdateAvailableData>>): UseMutationOptions<unknown, DefaultError, Options<SetAllAppUpdateAvailableData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SetAllAppUpdateAvailableData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await setAllAppUpdateAvailable({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const setAllAppSubnetToNullMutation = (options?: Partial<Options<SetAllAppSubnetToNullData>>): UseMutationOptions<unknown, DefaultError, Options<SetAllAppSubnetToNullData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<SetAllAppSubnetToNullData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await setAllAppSubnetToNull({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const startAllApps2Mutation = (options?: Partial<Options<StartAllApps2Data>>): UseMutationOptions<unknown, DefaultError, Options<StartAllApps2Data>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<StartAllApps2Data>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await startAllApps2({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const backupAllAppsMutation = (options?: Partial<Options<BackupAllAppsData>>): UseMutationOptions<unknown, DefaultError, Options<BackupAllAppsData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<BackupAllAppsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await backupAllApps({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const incrementAllAppVersionsMutation = (options?: Partial<Options<IncrementAllAppVersionsData>>): UseMutationOptions<unknown, DefaultError, Options<IncrementAllAppVersionsData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<IncrementAllAppVersionsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await incrementAllAppVersions({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const uninstallAllAppsMutation = (options?: Partial<Options<UninstallAllAppsData>>): UseMutationOptions<unknown, DefaultError, Options<UninstallAllAppsData>> => {
+    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<UninstallAllAppsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await uninstallAllApps({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

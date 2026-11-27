@@ -126,340 +126,6 @@
         ]
       }
     },
-    "/api/i18n/locales/{ns}/{lng}.json": {
-      "get": {
-        "operationId": "getTranslation",
-        "parameters": [
-          {
-            "name": "ns",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "lng",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "I18n"
-        ]
-      }
-    },
-    "/api/auth/login": {
-      "post": {
-        "operationId": "login",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "default": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/verify-totp": {
-      "post": {
-        "operationId": "verifyTotp",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyTotpBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "default": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/register": {
-      "post": {
-        "operationId": "register",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "default": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegisterDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/logout": {
-      "post": {
-        "operationId": "logout",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/forward-auth": {
-      "post": {
-        "operationId": "forwardAuth",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ForwardAuthBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/username": {
-      "patch": {
-        "operationId": "changeUsername",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangeUsernameBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/password": {
-      "patch": {
-        "operationId": "changePassword",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangePasswordBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/totp/get-uri": {
-      "patch": {
-        "operationId": "getTotpUri",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GetTotpUriBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "default": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetTotpUriDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/totp/setup": {
-      "patch": {
-        "operationId": "setupTotp",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetupTotpBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/totp/disable": {
-      "patch": {
-        "operationId": "disableTotp",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DisableTotpBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/reset-password": {
-      "post": {
-        "operationId": "resetPassword",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResetPasswordBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "default": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResetPasswordDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/traefik": {
-      "get": {
-        "operationId": "traefik",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
     "/api/apps/installed": {
       "get": {
         "operationId": "getInstalledApps",
@@ -922,6 +588,340 @@
         },
         "tags": [
           "Marketplace"
+        ]
+      }
+    },
+    "/api/i18n/locales/{ns}/{lng}.json": {
+      "get": {
+        "operationId": "getTranslation",
+        "parameters": [
+          {
+            "name": "ns",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lng",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "I18n"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/verify-totp": {
+      "post": {
+        "operationId": "verifyTotp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTotpBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/forward-auth": {
+      "post": {
+        "operationId": "forwardAuth",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForwardAuthBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/username": {
+      "patch": {
+        "operationId": "changeUsername",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeUsernameBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/password": {
+      "patch": {
+        "operationId": "changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/totp/get-uri": {
+      "patch": {
+        "operationId": "getTotpUri",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetTotpUriBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTotpUriDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/totp/setup": {
+      "patch": {
+        "operationId": "setupTotp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupTotpBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/totp/disable": {
+      "patch": {
+        "operationId": "disableTotp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisableTotpBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "operationId": "resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/traefik": {
+      "get": {
+        "operationId": "traefik",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
         ]
       }
     },
@@ -1746,13 +1746,21 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
-                      "type": "object",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -1762,15 +1770,26 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
-                      },
-                      "nullable": true
+                      }
                     },
                     "error": {
-                      "type": "object",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
                       "example": {},
                       "additionalProperties": {
                         "type": "object",
@@ -1779,18 +1798,27 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
-                      },
-                      "nullable": true
+                      }
                     },
                     "details": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -1800,7 +1828,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -1820,13 +1857,21 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
-                      "type": "object",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -1836,19 +1881,31 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
-                      },
-                      "nullable": true
+                      }
                     },
                     "error": {
-                      "type": "object",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -1858,22 +1915,32 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
-                      },
-                      "nullable": true
+                      }
                     },
                     "details": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -1883,7 +1950,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -2276,104 +2352,6 @@
         "summary": "",
         "tags": [
           "AppConfig"
-        ]
-      }
-    },
-    "/api/debug/seed": {
-      "post": {
-        "operationId": "seedDatabase",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Debug"
-        ]
-      }
-    },
-    "/api/debug/set-all-app-update-available": {
-      "post": {
-        "operationId": "setAllAppUpdateAvailable",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Debug"
-        ]
-      }
-    },
-    "/api/debug/set-all-subnets-to-null": {
-      "post": {
-        "operationId": "setAllAppSubnetToNull",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Debug"
-        ]
-      }
-    },
-    "/api/debug/start-all-apps": {
-      "post": {
-        "operationId": "startAllApps",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Debug"
-        ]
-      }
-    },
-    "/api/debug/backup-all-apps": {
-      "post": {
-        "operationId": "backupAllApps",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Debug"
-        ]
-      }
-    },
-    "/api/debug/increment-all-app-versions": {
-      "post": {
-        "operationId": "incrementAllAppVersions",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Debug"
-        ]
-      }
-    },
-    "/api/debug/uninstall-all-apps": {
-      "post": {
-        "operationId": "uninstallAllApps",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Debug"
         ]
       }
     },
@@ -2816,6 +2794,104 @@
           "Plugins"
         ]
       }
+    },
+    "/api/debug/seed": {
+      "post": {
+        "operationId": "seedDatabase",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Debug"
+        ]
+      }
+    },
+    "/api/debug/set-all-app-update-available": {
+      "post": {
+        "operationId": "setAllAppUpdateAvailable",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Debug"
+        ]
+      }
+    },
+    "/api/debug/set-all-subnets-to-null": {
+      "post": {
+        "operationId": "setAllAppSubnetToNull",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Debug"
+        ]
+      }
+    },
+    "/api/debug/start-all-apps": {
+      "post": {
+        "operationId": "startAllApps",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Debug"
+        ]
+      }
+    },
+    "/api/debug/backup-all-apps": {
+      "post": {
+        "operationId": "backupAllApps",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Debug"
+        ]
+      }
+    },
+    "/api/debug/increment-all-app-versions": {
+      "post": {
+        "operationId": "incrementAllAppVersions",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Debug"
+        ]
+      }
+    },
+    "/api/debug/uninstall-all-apps": {
+      "post": {
+        "operationId": "uninstallAllApps",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Debug"
+        ]
+      }
     }
   },
   "info": {
@@ -3105,6 +3181,11 @@
                 "maximum": 65535,
                 "minimum": 0
               },
+              "sessionMaxAgeInDays": {
+                "type": "number",
+                "maximum": 365,
+                "minimum": 1
+              },
               "sslPort": {
                 "type": "number",
                 "maximum": 65535,
@@ -3148,6 +3229,7 @@
               "persistTraefikConfig",
               "port",
               "postgresPort",
+              "sessionMaxAgeInDays",
               "sslPort",
               "timeZone"
             ]
@@ -3308,6 +3390,17 @@
               }
             ]
           },
+          "sessionMaxAgeInDays": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?:(?!^-0$)-?(?:(?:0|[1-9]\\d*)))$"
+              }
+            ]
+          },
           "sslPort": {
             "anyOf": [
               {
@@ -3382,208 +3475,6 @@
           "memoryTotal",
           "percentUsed",
           "percentUsedMemory"
-        ]
-      },
-      "LoginBody": {
-        "type": "object",
-        "properties": {
-          "password": {
-            "type": "string"
-          },
-          "username": {
-            "type": "string"
-          },
-          "redirectUrl": {
-            "type": "string",
-            "format": "uri"
-          }
-        },
-        "required": [
-          "password",
-          "username"
-        ]
-      },
-      "LoginDto": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean"
-          },
-          "redirectUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "totpSessionId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "success"
-        ]
-      },
-      "VerifyTotpBody": {
-        "type": "object",
-        "properties": {
-          "totpCode": {
-            "type": "string"
-          },
-          "totpSessionId": {
-            "type": "string"
-          },
-          "redirectUrl": {
-            "type": "string",
-            "format": "uri"
-          }
-        },
-        "required": [
-          "totpCode",
-          "totpSessionId"
-        ]
-      },
-      "RegisterBody": {
-        "type": "object",
-        "properties": {
-          "password": {
-            "type": "string"
-          },
-          "username": {
-            "type": "string"
-          },
-          "redirectUrl": {
-            "type": "string",
-            "format": "uri"
-          }
-        },
-        "required": [
-          "password",
-          "username"
-        ]
-      },
-      "RegisterDto": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "success"
-        ]
-      },
-      "ForwardAuthBody": {
-        "type": "object",
-        "properties": {
-          "redirectUrl": {
-            "type": "string",
-            "format": "uri"
-          }
-        },
-        "required": [
-          "redirectUrl"
-        ]
-      },
-      "ChangeUsernameBody": {
-        "type": "object",
-        "properties": {
-          "newUsername": {
-            "type": "string"
-          },
-          "password": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "newUsername",
-          "password"
-        ]
-      },
-      "ChangePasswordBody": {
-        "type": "object",
-        "properties": {
-          "currentPassword": {
-            "type": "string"
-          },
-          "newPassword": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "currentPassword",
-          "newPassword"
-        ]
-      },
-      "GetTotpUriBody": {
-        "type": "object",
-        "properties": {
-          "password": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "password"
-        ]
-      },
-      "GetTotpUriDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "uri": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "key",
-          "uri"
-        ]
-      },
-      "SetupTotpBody": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "code"
-        ]
-      },
-      "DisableTotpBody": {
-        "type": "object",
-        "properties": {
-          "password": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "password"
-        ]
-      },
-      "ResetPasswordBody": {
-        "type": "object",
-        "properties": {
-          "newPassword": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "newPassword"
-        ]
-      },
-      "ResetPasswordDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string"
-          },
-          "success": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "email",
-          "success"
         ]
       },
       "MyAppsDto": {
@@ -3902,6 +3793,23 @@
                     },
                     "version": {
                       "type": "string"
+                    },
+                    "backup": {
+                      "type": "object",
+                      "properties": {
+                        "stop": {
+                          "type": "boolean"
+                        },
+                        "include": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "stop"
+                      ]
                     },
                     "gid": {
                       "type": "number"
@@ -4311,6 +4219,23 @@
                     "version": {
                       "type": "string"
                     },
+                    "backup": {
+                      "type": "object",
+                      "properties": {
+                        "stop": {
+                          "type": "boolean"
+                        },
+                        "include": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "stop"
+                      ]
+                    },
                     "gid": {
                       "type": "number"
                     },
@@ -4606,6 +4531,23 @@
               },
               "version": {
                 "type": "string"
+              },
+              "backup": {
+                "type": "object",
+                "properties": {
+                  "stop": {
+                    "type": "boolean"
+                  },
+                  "include": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "stop"
+                ]
               },
               "gid": {
                 "type": "number"
@@ -5083,6 +5025,208 @@
           }
         },
         "required": [
+          "success"
+        ]
+      },
+      "LoginBody": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "redirectUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "password",
+          "username"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "redirectUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "totpSessionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "VerifyTotpBody": {
+        "type": "object",
+        "properties": {
+          "totpCode": {
+            "type": "string"
+          },
+          "totpSessionId": {
+            "type": "string"
+          },
+          "redirectUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "totpCode",
+          "totpSessionId"
+        ]
+      },
+      "RegisterBody": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "redirectUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "password",
+          "username"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "ForwardAuthBody": {
+        "type": "object",
+        "properties": {
+          "redirectUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "redirectUrl"
+        ]
+      },
+      "ChangeUsernameBody": {
+        "type": "object",
+        "properties": {
+          "newUsername": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "newUsername",
+          "password"
+        ]
+      },
+      "ChangePasswordBody": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "GetTotpUriBody": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
+      "GetTotpUriDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "uri"
+        ]
+      },
+      "SetupTotpBody": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "DisableTotpBody": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
+      "ResetPasswordBody": {
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "newPassword"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email",
           "success"
         ]
       },
@@ -5672,6 +5816,10 @@
                       2
                     ]
                   },
+                  "migrations": {
+                    "enum": [],
+                    "message": "Define app migrations in migrations/*.yml files"
+                  },
                   "overrides": {
                     "type": "array",
                     "items": {
@@ -5768,10 +5916,6 @@
                         "services"
                       ]
                     }
-                  },
-                  "migrations": {
-                    "enum": [],
-                    "message": "Define app migrations in migrations/*.yml files"
                   }
                 },
                 "required": [
@@ -5914,6 +6058,10 @@
                       2
                     ]
                   },
+                  "migrations": {
+                    "enum": [],
+                    "message": "Define app migrations in migrations/*.yml files"
+                  },
                   "overrides": {
                     "type": "array",
                     "items": {
@@ -6010,10 +6158,6 @@
                         "services"
                       ]
                     }
-                  },
-                  "migrations": {
-                    "enum": [],
-                    "message": "Define app migrations in migrations/*.yml files"
                   }
                 },
                 "required": [
@@ -6546,7 +6690,6 @@
             "type": "number"
           },
           "nextCursor": {
-            "type": "string",
             "anyOf": [
               {
                 "type": "string"
@@ -6874,7 +7017,6 @@
             "additionalProperties": false
           },
           "installed": {
-            "type": "string",
             "anyOf": [
               {
                 "type": "object",
@@ -7658,7 +7800,6 @@
             "type": "number"
           },
           "info": {
-            "type": "string",
             "anyOf": [
               {
                 "type": "object",
@@ -7938,7 +8079,6 @@
             "type": "string"
           },
           "latestTipiVersion": {
-            "type": "string",
             "anyOf": [
               {
                 "type": "number"
@@ -7949,7 +8089,6 @@
             ]
           },
           "latestVersion": {
-            "type": "string",
             "anyOf": [
               {
                 "type": "string"
@@ -8027,6 +8166,27 @@
           "success"
         ]
       },
+      "UpdatePluginBodyDto": {
+        "type": "object",
+        "properties": {
+          "globalConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          }
+        }
+      },
       "UpdatePluginConfigBodyDto": {
         "type": "object",
         "properties": {
@@ -8050,27 +8210,6 @@
         "required": [
           "globalConfig"
         ]
-      },
-      "UpdatePluginBodyDto": {
-        "type": "object",
-        "properties": {
-          "globalConfig": {
-            "type": "object",
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            }
-          }
-        }
       }
     }
   }

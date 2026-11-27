@@ -66,6 +66,7 @@ export type AppContextDto = {
         persistTraefikConfig: boolean;
         port: number;
         postgresPort: number;
+        sessionMaxAgeInDays: number;
         sslPort: number;
         timeZone: string;
         experimental_insecureCookie?: boolean;
@@ -105,6 +106,7 @@ export type UserSettingsBody = {
     persistTraefikConfig?: boolean;
     port?: number | string;
     postgresPort?: number | string;
+    sessionMaxAgeInDays?: number | string;
     sslPort?: number | string;
     themeBase?: string;
     themeColor?: string;
@@ -124,74 +126,6 @@ export type LoadDto = {
     memoryTotal: number;
     percentUsed: number;
     percentUsedMemory: number;
-};
-
-export type LoginBody = {
-    password: string;
-    username: string;
-    redirectUrl?: string;
-};
-
-export type LoginDto = {
-    success: boolean;
-    redirectUrl?: string;
-    totpSessionId?: string;
-};
-
-export type VerifyTotpBody = {
-    totpCode: string;
-    totpSessionId: string;
-    redirectUrl?: string;
-};
-
-export type RegisterBody = {
-    password: string;
-    username: string;
-    redirectUrl?: string;
-};
-
-export type RegisterDto = {
-    success: boolean;
-};
-
-export type ForwardAuthBody = {
-    redirectUrl: string;
-};
-
-export type ChangeUsernameBody = {
-    newUsername: string;
-    password: string;
-};
-
-export type ChangePasswordBody = {
-    currentPassword: string;
-    newPassword: string;
-};
-
-export type GetTotpUriBody = {
-    password: string;
-};
-
-export type GetTotpUriDto = {
-    key: string;
-    uri: string;
-};
-
-export type SetupTotpBody = {
-    code: string;
-};
-
-export type DisableTotpBody = {
-    password: string;
-};
-
-export type ResetPasswordBody = {
-    newPassword: string;
-};
-
-export type ResetPasswordDto = {
-    email: string;
-    success: boolean;
 };
 
 export type MyAppsDto = {
@@ -258,6 +192,10 @@ export type MyAppsDto = {
             updated_at: number;
             urn: string;
             version: string;
+            backup?: {
+                stop: boolean;
+                include?: Array<string>;
+            };
             gid?: number;
             min_tipi_version?: string;
             port?: number;
@@ -337,6 +275,10 @@ export type GuestAppsDto = {
             updated_at: number;
             urn: string;
             version: string;
+            backup?: {
+                stop: boolean;
+                include?: Array<string>;
+            };
             gid?: number;
             min_tipi_version?: string;
             port?: number;
@@ -401,6 +343,10 @@ export type GetAppDto = {
         updated_at: number;
         urn: string;
         version: string;
+        backup?: {
+            stop: boolean;
+            include?: Array<string>;
+        };
         gid?: number;
         min_tipi_version?: string;
         port?: number;
@@ -496,6 +442,74 @@ export type UpdateAppStoreBodyDto = {
 };
 
 export type UpdateAppStoreDto = {
+    success: boolean;
+};
+
+export type LoginBody = {
+    password: string;
+    username: string;
+    redirectUrl?: string;
+};
+
+export type LoginDto = {
+    success: boolean;
+    redirectUrl?: string;
+    totpSessionId?: string;
+};
+
+export type VerifyTotpBody = {
+    totpCode: string;
+    totpSessionId: string;
+    redirectUrl?: string;
+};
+
+export type RegisterBody = {
+    password: string;
+    username: string;
+    redirectUrl?: string;
+};
+
+export type RegisterDto = {
+    success: boolean;
+};
+
+export type ForwardAuthBody = {
+    redirectUrl: string;
+};
+
+export type ChangeUsernameBody = {
+    newUsername: string;
+    password: string;
+};
+
+export type ChangePasswordBody = {
+    currentPassword: string;
+    newPassword: string;
+};
+
+export type GetTotpUriBody = {
+    password: string;
+};
+
+export type GetTotpUriDto = {
+    key: string;
+    uri: string;
+};
+
+export type SetupTotpBody = {
+    code: string;
+};
+
+export type DisableTotpBody = {
+    password: string;
+};
+
+export type ResetPasswordBody = {
+    newPassword: string;
+};
+
+export type ResetPasswordDto = {
+    email: string;
     success: boolean;
 };
 
@@ -635,6 +649,7 @@ export type CreateCustomAppDto = {
         };
         'x-runtipi': {
             schema_version: 1 | 2;
+            migrations?: never;
             overrides?: Array<{
                 architecture: 'amd64' | 'arm64';
                 services: {
@@ -656,7 +671,6 @@ export type CreateCustomAppDto = {
                     };
                 };
             }>;
-            migrations?: never;
         };
         networks?: {
             [key: string]: unknown;
@@ -694,6 +708,7 @@ export type UpdateCustomAppDto = {
         };
         'x-runtipi': {
             schema_version: 1 | 2;
+            migrations?: never;
             overrides?: Array<{
                 architecture: 'amd64' | 'arm64';
                 services: {
@@ -715,7 +730,6 @@ export type UpdateCustomAppDto = {
                     };
                 };
             }>;
-            migrations?: never;
         };
         networks?: {
             [key: string]: unknown;
@@ -1130,14 +1144,14 @@ export type PluginSuccessDto = {
     success: boolean;
 };
 
-export type UpdatePluginConfigBodyDto = {
-    globalConfig: {
+export type UpdatePluginBodyDto = {
+    globalConfig?: {
         [key: string]: number | string | boolean;
     };
 };
 
-export type UpdatePluginBodyDto = {
-    globalConfig?: {
+export type UpdatePluginConfigBodyDto = {
+    globalConfig: {
         [key: string]: number | string | boolean;
     };
 };
@@ -1211,162 +1225,6 @@ export type DownloadLocalCertificateData = {
 };
 
 export type DownloadLocalCertificateResponses = {
-    200: unknown;
-};
-
-export type GetTranslationData = {
-    body?: never;
-    path: {
-        ns: string;
-        lng: string;
-    };
-    query?: never;
-    url: '/api/i18n/locales/{ns}/{lng}.json';
-};
-
-export type GetTranslationResponses = {
-    200: unknown;
-};
-
-export type LoginData = {
-    body: LoginBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/login';
-};
-
-export type LoginResponses = {
-    default: LoginDto;
-};
-
-export type LoginResponse = LoginResponses[keyof LoginResponses];
-
-export type VerifyTotpData = {
-    body: VerifyTotpBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/verify-totp';
-};
-
-export type VerifyTotpResponses = {
-    default: LoginDto;
-};
-
-export type VerifyTotpResponse = VerifyTotpResponses[keyof VerifyTotpResponses];
-
-export type RegisterData = {
-    body: RegisterBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/register';
-};
-
-export type RegisterResponses = {
-    default: RegisterDto;
-};
-
-export type RegisterResponse = RegisterResponses[keyof RegisterResponses];
-
-export type LogoutData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/auth/logout';
-};
-
-export type LogoutResponses = {
-    201: unknown;
-};
-
-export type ForwardAuthData = {
-    body: ForwardAuthBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/forward-auth';
-};
-
-export type ForwardAuthResponses = {
-    201: unknown;
-};
-
-export type ChangeUsernameData = {
-    body: ChangeUsernameBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/username';
-};
-
-export type ChangeUsernameResponses = {
-    200: unknown;
-};
-
-export type ChangePasswordData = {
-    body: ChangePasswordBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/password';
-};
-
-export type ChangePasswordResponses = {
-    200: unknown;
-};
-
-export type GetTotpUriData = {
-    body: GetTotpUriBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/totp/get-uri';
-};
-
-export type GetTotpUriResponses = {
-    default: GetTotpUriDto;
-};
-
-export type GetTotpUriResponse = GetTotpUriResponses[keyof GetTotpUriResponses];
-
-export type SetupTotpData = {
-    body: SetupTotpBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/totp/setup';
-};
-
-export type SetupTotpResponses = {
-    200: unknown;
-};
-
-export type DisableTotpData = {
-    body: DisableTotpBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/totp/disable';
-};
-
-export type DisableTotpResponses = {
-    200: unknown;
-};
-
-export type ResetPasswordData = {
-    body: ResetPasswordBody;
-    path?: never;
-    query?: never;
-    url: '/api/auth/reset-password';
-};
-
-export type ResetPasswordResponses = {
-    default: ResetPasswordDto;
-};
-
-export type ResetPasswordResponse = ResetPasswordResponses[keyof ResetPasswordResponses];
-
-export type TraefikData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/auth/traefik';
-};
-
-export type TraefikResponses = {
     200: unknown;
 };
 
@@ -1591,6 +1449,162 @@ export type UpdateAppStoreResponses = {
 };
 
 export type UpdateAppStoreResponse = UpdateAppStoreResponses[keyof UpdateAppStoreResponses];
+
+export type GetTranslationData = {
+    body?: never;
+    path: {
+        ns: string;
+        lng: string;
+    };
+    query?: never;
+    url: '/api/i18n/locales/{ns}/{lng}.json';
+};
+
+export type GetTranslationResponses = {
+    200: unknown;
+};
+
+export type LoginData = {
+    body: LoginBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/login';
+};
+
+export type LoginResponses = {
+    default: LoginDto;
+};
+
+export type LoginResponse = LoginResponses[keyof LoginResponses];
+
+export type VerifyTotpData = {
+    body: VerifyTotpBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/verify-totp';
+};
+
+export type VerifyTotpResponses = {
+    default: LoginDto;
+};
+
+export type VerifyTotpResponse = VerifyTotpResponses[keyof VerifyTotpResponses];
+
+export type RegisterData = {
+    body: RegisterBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/register';
+};
+
+export type RegisterResponses = {
+    default: RegisterDto;
+};
+
+export type RegisterResponse = RegisterResponses[keyof RegisterResponses];
+
+export type LogoutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/auth/logout';
+};
+
+export type LogoutResponses = {
+    201: unknown;
+};
+
+export type ForwardAuthData = {
+    body: ForwardAuthBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/forward-auth';
+};
+
+export type ForwardAuthResponses = {
+    201: unknown;
+};
+
+export type ChangeUsernameData = {
+    body: ChangeUsernameBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/username';
+};
+
+export type ChangeUsernameResponses = {
+    200: unknown;
+};
+
+export type ChangePasswordData = {
+    body: ChangePasswordBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/password';
+};
+
+export type ChangePasswordResponses = {
+    200: unknown;
+};
+
+export type GetTotpUriData = {
+    body: GetTotpUriBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/totp/get-uri';
+};
+
+export type GetTotpUriResponses = {
+    default: GetTotpUriDto;
+};
+
+export type GetTotpUriResponse = GetTotpUriResponses[keyof GetTotpUriResponses];
+
+export type SetupTotpData = {
+    body: SetupTotpBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/totp/setup';
+};
+
+export type SetupTotpResponses = {
+    200: unknown;
+};
+
+export type DisableTotpData = {
+    body: DisableTotpBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/totp/disable';
+};
+
+export type DisableTotpResponses = {
+    200: unknown;
+};
+
+export type ResetPasswordData = {
+    body: ResetPasswordBody;
+    path?: never;
+    query?: never;
+    url: '/api/auth/reset-password';
+};
+
+export type ResetPasswordResponses = {
+    default: ResetPasswordDto;
+};
+
+export type ResetPasswordResponse = ResetPasswordResponses[keyof ResetPasswordResponses];
+
+export type TraefikData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/auth/traefik';
+};
+
+export type TraefikResponses = {
+    200: unknown;
+};
 
 export type GetAppJobData = {
     body?: never;
@@ -1993,22 +2007,34 @@ export type CheckErrors = {
      * The Health Check is not successful
      */
     503: {
-        status?: string;
+        status?: 'error' | 'shutting_down';
         info?: {
             [key: string]: {
-                status: string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
                 [key: string]: unknown;
             };
-        };
+        } | null;
         error?: {
             [key: string]: {
-                status: string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
                 [key: string]: unknown;
             };
-        };
+        } | null;
         details?: {
             [key: string]: {
-                status: string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
                 [key: string]: unknown;
             };
         };
@@ -2022,22 +2048,34 @@ export type CheckResponses = {
      * The Health Check is successful
      */
     200: {
-        status?: string;
+        status?: 'ok' | 'degraded';
         info?: {
             [key: string]: {
-                status: string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
                 [key: string]: unknown;
             };
-        };
+        } | null;
         error?: {
             [key: string]: {
-                status: string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
                 [key: string]: unknown;
             };
-        };
+        } | null;
         details?: {
             [key: string]: {
-                status: string;
+                status: 'up' | 'degraded' | 'down';
+                /**
+                 * Time the health indicator took to respond, in ms
+                 */
+                responseTime?: number;
                 [key: string]: unknown;
             };
         };
@@ -2216,83 +2254,6 @@ export type SyncWithTemplateResponses = {
 };
 
 export type SyncWithTemplateResponse = SyncWithTemplateResponses[keyof SyncWithTemplateResponses];
-
-export type SeedDatabaseData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/debug/seed';
-};
-
-export type SeedDatabaseResponses = {
-    201: unknown;
-};
-
-export type SetAllAppUpdateAvailableData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/debug/set-all-app-update-available';
-};
-
-export type SetAllAppUpdateAvailableResponses = {
-    201: unknown;
-};
-
-export type SetAllAppSubnetToNullData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/debug/set-all-subnets-to-null';
-};
-
-export type SetAllAppSubnetToNullResponses = {
-    201: unknown;
-};
-
-export type StartAllApps2Data = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/debug/start-all-apps';
-};
-
-export type StartAllApps2Responses = {
-    201: unknown;
-};
-
-export type BackupAllAppsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/debug/backup-all-apps';
-};
-
-export type BackupAllAppsResponses = {
-    201: unknown;
-};
-
-export type IncrementAllAppVersionsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/debug/increment-all-app-versions';
-};
-
-export type IncrementAllAppVersionsResponses = {
-    201: unknown;
-};
-
-export type UninstallAllAppsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/debug/uninstall-all-apps';
-};
-
-export type UninstallAllAppsResponses = {
-    201: unknown;
-};
 
 export type ListAgentCredentialsData = {
     body?: never;
@@ -2484,3 +2445,80 @@ export type UpdateGlobalConfigResponses = {
 };
 
 export type UpdateGlobalConfigResponse = UpdateGlobalConfigResponses[keyof UpdateGlobalConfigResponses];
+
+export type SeedDatabaseData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/debug/seed';
+};
+
+export type SeedDatabaseResponses = {
+    201: unknown;
+};
+
+export type SetAllAppUpdateAvailableData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/debug/set-all-app-update-available';
+};
+
+export type SetAllAppUpdateAvailableResponses = {
+    201: unknown;
+};
+
+export type SetAllAppSubnetToNullData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/debug/set-all-subnets-to-null';
+};
+
+export type SetAllAppSubnetToNullResponses = {
+    201: unknown;
+};
+
+export type StartAllApps2Data = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/debug/start-all-apps';
+};
+
+export type StartAllApps2Responses = {
+    201: unknown;
+};
+
+export type BackupAllAppsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/debug/backup-all-apps';
+};
+
+export type BackupAllAppsResponses = {
+    201: unknown;
+};
+
+export type IncrementAllAppVersionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/debug/increment-all-app-versions';
+};
+
+export type IncrementAllAppVersionsResponses = {
+    201: unknown;
+};
+
+export type UninstallAllAppsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/debug/uninstall-all-apps';
+};
+
+export type UninstallAllAppsResponses = {
+    201: unknown;
+};

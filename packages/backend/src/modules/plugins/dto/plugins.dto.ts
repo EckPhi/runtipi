@@ -12,7 +12,13 @@ const searchPluginsQuerySchema = type({
   storeId: 'string?',
 });
 
-const catalogPluginSchema = pluginManifestSchema.merge({ installed: 'boolean' });
+const pluginCompatibilitySchema = type({
+  compatible: 'boolean',
+  minTipiVersion: type('string').or('null'),
+  reason: type("'min_tipi_version' | 'unavailable' | 'deprecated'").or('null'),
+});
+
+const catalogPluginSchema = pluginManifestSchema.merge({ installed: 'boolean', compatibility: pluginCompatibilitySchema });
 
 const searchPluginsResponseSchema = type({
   data: catalogPluginSchema.array(),
@@ -39,6 +45,7 @@ const installedPluginSchema = type({
 
 const pluginDetailsSchema = type({
   info: pluginManifestSchema,
+  compatibility: pluginCompatibilitySchema,
   installed: installedPluginSchema.or('null'),
   updateAvailable: 'boolean',
 });

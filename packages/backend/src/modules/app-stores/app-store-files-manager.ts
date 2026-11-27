@@ -11,6 +11,7 @@ import type { LoggerService } from '@/core/logger/logger.service';
 import { appInfoSchema, convertLegacyToYaml, pluginManifestSchema } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
 import { type } from 'arktype';
+import git from 'isomorphic-git';
 
 export const PLUGIN_MANIFEST_FILENAME = 'plugin.json';
 
@@ -145,32 +146,67 @@ export class AppStoreFilesManager {
   }
 
   /**
-   * Copy a plugin from the store repository into a private staging directory and read its manifest from that copy.
-   * Validating the staged manifest guarantees that what is checked is exactly what gets installed, even if the
-   * repository is pulled concurrently. The caller must either promote or discard the staged copy.
+   * Write the blobs of a Git tree into `destination`. Only regular files and directories are written: symlinks and
+   * submodules are skipped so an installed plugin can never point back into (or outside of) the repository.
+   */
+  private async writeGitTree(repoDir: string, treeOid: string, destination: string) {
+    const { tree } = await git.readTree({ fs, dir: repoDir, oid: treeOid });
+
+    for (const entry of tree) {
+      // Git never stores these, but a crafted object could; never let one escape the destination.
+      if (entry.path === '.' || entry.path === '..' || entry.path.includes('/') || entry.path.includes('\\') || entry.path.includes('\0')) {
+        throw new Error(`Invalid path "${entry.path}" in plugin tree`);
+      }
+
+      const target = path.join(destination, entry.path);
+
+      if (entry.type === 'tree') {
+        if (!(await this.filesystem.createDirectory(target))) {
+          throw new Error(`Failed to create ${target}`);
+        }
+        await this.writeGitTree(repoDir, entry.oid, target);
+      } else if (entry.type === 'blob' && (entry.mode === '100644' || entry.mode === '100755')) {
+        const { blob } = await git.readBlob({ fs, dir: repoDir, oid: entry.oid });
+        if (!(await this.filesystem.writeBinaryFile(target, Buffer.from(blob)))) {
+          throw new Error(`Failed to write ${target}`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Copy a plugin into a private staging directory and read its manifest from that copy.
+   *
+   * The copy is taken from the commit the store's `HEAD` points to, not from the working tree. Git objects are
+   * immutable, so a store pull running at the same time (fetch, branch move, checkout) cannot produce a staged copy that
+   * mixes files of two versions: every file comes from one commit, and validating the staged manifest validates exactly
+   * what gets installed. The caller must either promote or discard the staged copy.
    */
   public async stagePlugin(pluginUrn: AppUrn) {
-    const { pluginRepoDir } = this.getPluginPaths(pluginUrn);
+    const { appName: pluginId } = extractAppUrn(pluginUrn);
+    const { directories } = this.configuration.getConfig();
+    const repoDir = path.join(directories.dataDir, 'repos', this.storeConfig.slug);
 
-    if (!(await this.filesystem.isDirectory(pluginRepoDir))) {
-      throw new Error(`Plugin ${pluginUrn} not found in repo ${this.storeConfig.slug}`);
+    let treeOid: string;
+    try {
+      const commitOid = await git.resolveRef({ fs, dir: repoDir, ref: 'HEAD' });
+      // With a filepath, readTree resolves the commit to the tree at that path and returns that tree's own oid.
+      ({ oid: treeOid } = await git.readTree({ fs, dir: repoDir, oid: commitOid, filepath: `plugins/${pluginId}` }));
+    } catch (error) {
+      throw new Error(`Plugin ${pluginUrn} not found in repo ${this.storeConfig.slug}`, { cause: error });
     }
 
-    const { appName: pluginId } = extractAppUrn(pluginUrn);
     const stagingDir = path.join(this.getPluginStagingFolder(), `${this.storeConfig.slug}-${pluginId}-${crypto.randomUUID()}`);
 
     if (!(await this.filesystem.createDirectory(stagingDir))) {
       throw new Error(`Failed to create staging directory for plugin ${pluginUrn}`);
     }
 
-    // Symlinks are skipped so an installed plugin can never point back into (or outside of) the repository.
-    const copied = await this.filesystem.copyDirectory(pluginRepoDir, stagingDir, {
-      filter: async (source) => !(await fs.promises.lstat(source)).isSymbolicLink(),
-    });
-
-    if (!copied) {
+    try {
+      await this.writeGitTree(repoDir, treeOid, stagingDir);
+    } catch (error) {
       await this.filesystem.removeDirectory(stagingDir);
-      throw new Error(`Failed to copy plugin ${pluginUrn} from repo ${this.storeConfig.slug}`);
+      throw new Error(`Failed to copy plugin ${pluginUrn} from repo ${this.storeConfig.slug}`, { cause: error });
     }
 
     const manifest = await this.getPluginInfoFromDirectory(pluginUrn, stagingDir).catch(() => null);

@@ -296,7 +296,7 @@ describe('PluginsService', () => {
       const { service, repository } = await setup();
       await service.installPlugin(URN, { ENDPOINT: 'x' });
       await createPluginInStore('store', { id: 'demo', version: '2.0.0', tipi_version: 2, settings });
-      const copy = vi.spyOn(FilesystemService.prototype, 'copyDirectory').mockResolvedValueOnce(false);
+      const copy = vi.spyOn(FilesystemService.prototype, 'writeBinaryFile').mockResolvedValueOnce(false);
       onTestFinished(() => copy.mockRestore());
 
       await expect(service.updatePlugin(URN)).rejects.toMatchObject({ response: { message: 'PLUGIN_ERROR_INSTALL_FAILED' } });

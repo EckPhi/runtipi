@@ -40,6 +40,13 @@ describe('PluginSettingsForm', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ ENDPOINT: 'https://s3.example.com', RETENTION: 14 }));
   });
 
+  it('sends an explicit clear for an existing optional setting', async () => {
+    const onSubmit = renderForm(vi.fn(), { ENDPOINT: 'https://s3.example.com', RETENTION: 7 });
+    fireEvent.change(screen.getByPlaceholderText('Retention'), { target: { value: '' } });
+    fireEvent.click(screen.getByText('submit'));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ ENDPOINT: 'https://s3.example.com', RETENTION: '' }));
+  });
+
   it('does not submit when a required value is missing', async () => {
     const onSubmit = renderForm();
 
@@ -51,13 +58,13 @@ describe('PluginSettingsForm', () => {
 });
 
 describe('normalizePluginConfig', () => {
-  it('converts form values to the declared types and drops empty values', () => {
+  it('converts values to declared types and preserves explicit clears', () => {
     expect(
       normalizePluginConfig({ ENDPOINT: 'x', RETENTION: '3', FLAG: true, EMPTY: '' }, [
         ...fields,
         { type: 'boolean', label: 'Flag', env_variable: 'FLAG', required: false },
         { type: 'text', label: 'Empty', env_variable: 'EMPTY', required: false },
       ]),
-    ).toEqual({ ENDPOINT: 'x', RETENTION: 3, FLAG: true });
+    ).toEqual({ ENDPOINT: 'x', RETENTION: 3, FLAG: true, EMPTY: '' });
   });
 });

@@ -40,7 +40,7 @@ export const pluginPath = (urn: string) => {
 
 /**
  * Form values come back as strings (text inputs) or booleans (switches). Convert them to what the plugin
- * declares so the backend validation accepts them, and drop empty optional values.
+ * declares so the backend validation accepts them. Preserve explicit clears because config updates merge with stored values.
  */
 export const normalizePluginConfig = (values: Record<string, unknown>, fields: PluginInfo['settings']['global']): PluginConfigValues => {
   const config: PluginConfigValues = {};
@@ -48,11 +48,13 @@ export const normalizePluginConfig = (values: Record<string, unknown>, fields: P
   for (const field of fields) {
     const value = values[field.env_variable];
 
-    if (value === undefined || value === null || value === '') {
+    if (value === undefined || value === null) {
       continue;
     }
 
-    if (field.type === 'number') {
+    if (value === '') {
+      config[field.env_variable] = '';
+    } else if (field.type === 'number') {
       config[field.env_variable] = Number(value);
     } else if (field.type === 'boolean') {
       config[field.env_variable] = value === true || value === 'true';

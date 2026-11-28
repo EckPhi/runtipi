@@ -22,8 +22,27 @@ import {
 } from './app-info.js';
 import type { AppCategory, AppInfo, AppInfoInput, FieldType, FormField, RandomEncoding } from './app-info.js';
 
-import { PLUGIN_CAPABILITIES, pluginManifestSchema, pluginSettingsSchema } from './plugin-manifest.js';
-import type { PluginCapability, PluginManifest, PluginManifestInput, PluginSettings } from './plugin-manifest.js';
+import {
+  PLUGIN_CAPABILITIES,
+  composePatchSchema,
+  getManifestReferenceErrors,
+  getTemplateReferences,
+  pluginAppFieldSchema,
+  pluginAppSettingsSchema,
+  pluginManifestObjectSchema,
+  pluginManifestSchema,
+  pluginSettingsSchema,
+} from './plugin-manifest.js';
+import type {
+  ComposePatch,
+  PluginAppField,
+  PluginAppSettings,
+  PluginAppliesTo,
+  PluginCapability,
+  PluginManifest,
+  PluginManifestInput,
+  PluginSettings,
+} from './plugin-manifest.js';
 
 import { type SSE, type Topic, sseSchema } from './sse.js';
 import { appJobSchema, type AppJob } from './app-job.js';
@@ -68,7 +87,17 @@ export {
   type AppJob,
   PLUGIN_CAPABILITIES,
   pluginManifestSchema,
+  pluginManifestObjectSchema,
   pluginSettingsSchema,
+  pluginAppFieldSchema,
+  pluginAppSettingsSchema,
+  composePatchSchema,
+  getManifestReferenceErrors,
+  getTemplateReferences,
+  type ComposePatch,
+  type PluginAppField,
+  type PluginAppSettings,
+  type PluginAppliesTo,
   type PluginCapability,
   type PluginManifest,
   type PluginManifestInput,

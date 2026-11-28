@@ -61,3 +61,68 @@ describe('pluginManifestSchema', () => {
     expect(pluginManifestSchema(manifest)).toBeInstanceOf(type.errors);
   });
 });
+
+describe('pluginManifestSchema app_settings', () => {
+  const tailscale = {
+    ...validManifest,
+    settings: {
+      global: [{ type: 'text', label: 'Network', env_variable: 'NETWORK_NAME', default: 'tailscale' }],
+      per_app: [
+        { type: 'boolean', label: 'Enabled', env_variable: 'ENABLED' },
+        { type: 'text', label: 'Hostname', env_variable: 'HOSTNAME', visible_when: 'ENABLED' },
+      ],
+    },
+    app_settings: {
+      title: 'Tailscale',
+      compose_patches: [
+        { op: 'add_network', when: 'ENABLED', network: '{{plugin.NETWORK_NAME}}', aliases: ['{{ app.HOSTNAME }}'] },
+        { op: 'add_labels', when: 'ENABLED', labels: { 'ts.name': '{{RUNTIPI_APP_ID}}' } },
+      ],
+    },
+  };
+
+  const parse = (manifest: unknown) => {
+    const result = pluginManifestSchema(manifest);
+    if (result instanceof type.errors) throw new Error(result.summary);
+    return result;
+  };
+
+  it('accepts a section with compose patches and applies defaults', () => {
+    const result = parse(tailscale);
+
+    expect(result.app_settings).toMatchObject({
+      title: 'Tailscale',
+      description: '',
+      applies_to: { exclude_network_mode: true, services: 'all' },
+    });
+    expect(result.app_settings?.compose_patches).toHaveLength(2);
+    expect(result.settings.per_app[1]?.visible_when).toBe('ENABLED');
+  });
+
+  it('defaults compose_patches to an empty list', () => {
+    expect(parse({ ...tailscale, app_settings: {} }).app_settings?.compose_patches).toEqual([]);
+  });
+
+  const withPatch = (patch: Record<string, unknown>) => ({ ...tailscale, app_settings: { compose_patches: [patch] } });
+
+  it.each([
+    ['an unknown patch op', withPatch({ op: 'run_script', when: 'ENABLED', script: 'rm -rf /' })],
+    ['a patch without when', withPatch({ op: 'add_network', network: 'tailscale' })],
+    ['a when that is not a per-app setting', withPatch({ op: 'add_network', when: 'NOPE', network: 'tailscale' })],
+    ['a when that is not a boolean', withPatch({ op: 'add_network', when: 'HOSTNAME', network: 'tailscale' })],
+    ['an unknown template scope', withPatch({ op: 'add_network', when: 'ENABLED', network: '{{env.HOME}}' })],
+    ['an undeclared global template', withPatch({ op: 'add_network', when: 'ENABLED', network: '{{plugin.MISSING}}' })],
+    ['an undeclared app template', withPatch({ op: 'add_labels', when: 'ENABLED', labels: { a: '{{app.MISSING}}' } })],
+    ['a template in a label key', withPatch({ op: 'add_labels', when: 'ENABLED', labels: { '{{app.NOPE}}': 'x' } })],
+    ['an unknown patch key', withPatch({ op: 'add_network', when: 'ENABLED', network: 'x', driver: 'host' })],
+    ['an unknown app_settings key', { ...tailscale, app_settings: { hooks: [] } }],
+    ['an unknown applies_to value', { ...tailscale, app_settings: { applies_to: { services: 'some' } } }],
+    ['app_settings without the compose capability', { ...tailscale, capabilities: ['dashboard-widget'] }],
+    [
+      'a visible_when that is not a boolean',
+      { ...tailscale, settings: { ...tailscale.settings, per_app: [{ type: 'text', label: 'A', env_variable: 'A', visible_when: 'A' }] } },
+    ],
+  ])('rejects %s', (_, manifest) => {
+    expect(pluginManifestSchema(manifest)).toBeInstanceOf(type.errors);
+  });
+});

@@ -1,7 +1,7 @@
 'use client';
 
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import { IconChevronRight } from '@tabler/icons-react';
+import { IconCheck, IconChevronRight } from '@tabler/icons-react';
 import clsx from 'clsx';
 import type * as React from 'react';
 
@@ -43,6 +43,17 @@ const DropdownMenuItem = ({
   inset?: boolean;
 }) => <DropdownMenuPrimitive.Item className={clsx('dropdown-item cursor-pointer', inset && 'ps-1', className)} {...props} />;
 
+const DropdownMenuCheckboxItem = ({ className, children, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>) => (
+  <DropdownMenuPrimitive.CheckboxItem className={clsx('dropdown-item cursor-pointer d-flex align-items-center gap-2', className)} {...props}>
+    <span className="d-inline-flex" style={{ width: 16 }} aria-hidden="true">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <IconCheck size={16} />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </DropdownMenuPrimitive.CheckboxItem>
+);
+
 const DropdownMenuLabel = ({
   className,
   inset,
@@ -62,6 +73,7 @@ export {
   DropdownMenuContent,
   DropdownMenuSubContent,
   DropdownMenuItem,
+  DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuGroup,
   DropdownMenuSeparator,

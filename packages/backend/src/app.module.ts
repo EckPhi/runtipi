@@ -30,6 +30,7 @@ import { LinksModule } from './modules/links/links.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { NetworkModule } from './modules/network/network.module';
 import { PluginsModule } from './modules/plugins/plugins.module';
+import { DashboardWidgetsModule } from './modules/dashboard-widgets/dashboard-widgets.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { SystemModule } from './modules/system/system.module';
 import { UserModule } from './modules/user/user.module';
@@ -74,6 +75,7 @@ const imports: (DynamicModule | typeof I18nModule)[] = [
   AppConfigModule,
   McpModule,
   PluginsModule,
+  DashboardWidgetsModule,
 ];
 
 const { NODE_ENV } = process.env;

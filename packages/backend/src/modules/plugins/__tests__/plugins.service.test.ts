@@ -10,12 +10,15 @@ import { MarketplaceService } from '@/modules/marketplace/marketplace.service';
 import { createMockAppStore } from '@/tests/helpers/app-mocks';
 import { createPluginInStore } from '@/tests/utils/create-plugin-in-store';
 import { AsyncMutex } from '@/utils/mutex/async-mutex';
+import type { PluginManifestInput } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
 import { fromPartial } from '@total-typescript/shoehorn';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { mock } from 'vitest-mock-extended';
 import type { PluginsRepository } from '../plugins.repository';
 import { PluginsService } from '../plugins.service';
+import { WidgetRegistry } from '@/modules/dashboard-widgets/widget-registry';
+import dashboardInsights from '../../../../../../examples/plugins/dashboard-insights/plugin.json';
 
 class InMemoryPluginsRepository {
   rows = new Map<string, Plugin>();
@@ -406,6 +409,15 @@ describe('PluginsService', () => {
       expect(repository.rows.get(URN)?.enabled).toBe(true);
     });
 
+    it('lists the manifests of enabled plugins only', async () => {
+      const { service } = await setup();
+      await service.installPlugin(URN, { ENDPOINT: 'x' });
+      expect((await service.getEnabledPluginManifests()).map((manifest) => manifest.urn)).toEqual([URN]);
+
+      await service.setPluginEnabled(URN, false);
+      expect(await service.getEnabledPluginManifests()).toEqual([]);
+    });
+
     it('merges and validates a global config update', async () => {
       const { service, repository } = await setup();
       await service.installPlugin(URN, { ENDPOINT: 'x' });
@@ -415,6 +427,26 @@ describe('PluginsService', () => {
 
       await expect(service.updateGlobalConfig(URN, { ENDPOINT: '' })).rejects.toMatchObject({ response: { message: 'PLUGIN_ERROR_INVALID_CONFIG' } });
       expect(repository.rows.get(URN)?.globalConfig).toEqual({ ENDPOINT: 'x', RETENTION: 3 });
+    });
+  });
+
+  describe('dashboard widgets', () => {
+    it('exposes the widgets of the example plugin once installed, and hides them when disabled', async () => {
+      const urn = 'dashboard-insights:store' as AppUrn;
+      await createPluginInStore('store', dashboardInsights as PluginManifestInput);
+      const { service } = await setup();
+      const registry = () => new WidgetRegistry(service).getWidgets();
+
+      expect(await registry()).toEqual([]);
+
+      await service.installPlugin(urn);
+      expect((await registry()).map(({ key, widget, refreshSeconds }) => [key, widget.title, widget.type, refreshSeconds])).toEqual([
+        ['dashboard-insights:store/backup-status', 'Backup status', 'list', 60],
+        ['dashboard-insights:store/app-resources', 'Per-app resource usage', 'list', 15],
+      ]);
+
+      await service.setPluginEnabled(urn, false);
+      expect(await registry()).toEqual([]);
     });
   });
 });

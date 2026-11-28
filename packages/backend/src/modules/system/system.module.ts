@@ -11,6 +11,6 @@ import { SystemService } from './system.service';
   imports: [DockerModule, UserModule, GithubModule],
   controllers: [SystemController],
   providers: [SystemService, HostMemoryService, InstanceService],
-  exports: [SystemService, InstanceService],
+  exports: [SystemService, InstanceService, HostMemoryService],
 })
 export class SystemModule {}

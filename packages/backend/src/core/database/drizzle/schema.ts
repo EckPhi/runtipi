@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm';
-import { boolean, customType, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, varchar } from 'drizzle-orm/pg-core';
+import { bigint, boolean, customType, index, integer, jsonb, pgEnum, pgTable, primaryKey, serial, text, varchar } from 'drizzle-orm/pg-core';
 
 export const appStatusEnum = pgEnum('app_status_enum', [
   'running',
@@ -125,6 +125,30 @@ export const appRestoreJournal = pgTable('app_restore_journal', {
   phase: varchar().$type<RestorePhase>().default('prepared').notNull(),
 });
 
+/** Outcome of the latest backups of an app, shown by dashboard widgets. Backup files themselves stay on disk. */
+export const appBackupStatus = pgTable('app_backup_status', {
+  appId: integer('app_id')
+    .primaryKey()
+    .notNull()
+    .references(() => app.id, { onDelete: 'cascade' }),
+  lastSuccessAt: integer('last_success_at'),
+  lastErrorAt: integer('last_error_at'),
+  lastError: text('last_error'),
+});
+
+/** Periodic samples of the size of an app's app-data folder, used to show storage growth. */
+export const appStorageSample = pgTable(
+  'app_storage_sample',
+  {
+    appId: integer('app_id')
+      .notNull()
+      .references(() => app.id, { onDelete: 'cascade' }),
+    sampledAt: integer('sampled_at').notNull(),
+    bytes: bigint({ mode: 'number' }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.appId, table.sampledAt] }), index('app_storage_sample_sampled_at_idx').on(table.sampledAt)],
+);
+
 export const user = pgTable('user', {
   id: serial().primaryKey().notNull(),
   username: varchar().notNull(),
@@ -141,6 +165,16 @@ export const user = pgTable('user', {
   salt: text(),
   locale: varchar().default('en').notNull(),
   hasSeenWelcome: boolean('has_seen_welcome').default(false).notNull(),
+});
+
+/** Per-user dashboard settings. */
+export const userDashboardPreference = pgTable('user_dashboard_preference', {
+  userId: integer('user_id')
+    .primaryKey()
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  /** Keys (`<plugin urn>/<widget id>`) of the plugin dashboard widgets the user has hidden. */
+  hiddenWidgets: jsonb('hidden_widgets').$type<string[]>().default([]).notNull(),
 });
 
 export const appStore = pgTable('app_store', {

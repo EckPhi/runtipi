@@ -2,6 +2,7 @@ import { extractAppUrn } from '@/common/helpers/app-helpers';
 import { DATABASE, type Database } from '@/core/database/database.module';
 import {
   app,
+  appBackupStatus,
   appMigration,
   appRestoreJournal,
   type MigrationLedgerState,
@@ -313,5 +314,27 @@ export class AppsRepository {
       .where(notInArray(app.status, statuses))
       .returning()
       .execute();
+  }
+
+  /**
+   * Record the outcome of a backup. A success keeps the last error so the dashboard can still show when it happened,
+   * but the error stops being the latest outcome.
+   */
+  public async recordBackupResult(appUrn: AppUrn, result: { success: true } | { success: false; error: string }) {
+    const existing = await this.getAppByUrn(appUrn);
+    if (!existing) return;
+
+    const now = Math.floor(Date.now() / 1000);
+    const values = result.success ? { lastSuccessAt: now } : { lastErrorAt: now, lastError: result.error.slice(0, 2000) };
+
+    await this.db
+      .insert(appBackupStatus)
+      .values({ appId: existing.id, ...values })
+      .onConflictDoUpdate({ target: appBackupStatus.appId, set: values })
+      .execute();
+  }
+
+  public async getBackupStatuses() {
+    return this.db.select().from(appBackupStatus).execute();
   }
 }

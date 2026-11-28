@@ -85,6 +85,25 @@ test.each(['tar terminated by SIGTERM', 'tar failed with exit code 2'])(
   },
 );
 
+test('records the outcome of each backup for the dashboard', async () => {
+  const { manager, archive, apps } = await setup();
+
+  await manager.backupApp(appUrn, false);
+  expect(apps.recordBackupResult).toHaveBeenLastCalledWith(appUrn, { success: true });
+
+  archive.createTarGz.mockRejectedValueOnce(new Error('No space left on device'));
+  await expect(manager.backupApp(appUrn, false)).rejects.toThrow('No space left on device');
+  expect(apps.recordBackupResult).toHaveBeenLastCalledWith(appUrn, { success: false, error: 'No space left on device' });
+});
+
+test('still completes a backup when its status cannot be recorded', async () => {
+  const { manager, apps, logger } = await setup();
+  apps.recordBackupResult.mockRejectedValue(new Error('database unavailable'));
+
+  await expect(manager.backupApp(appUrn, false)).resolves.toMatch(/\.tar\.gz$/);
+  expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('backup status'), expect.any(Error));
+});
+
 test('restarts the app before compressing its immutable snapshot', async () => {
   const { manager, archive, appDataDir, backupDir, docker } = await setup();
   docker.composeApp.mockImplementation(async (_urn, command) => {

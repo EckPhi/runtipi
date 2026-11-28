@@ -121,7 +121,19 @@ export class BackupManager implements OnModuleInit {
   }
 
   public async backupApp(appUrn: AppUrn, wasRunning = false, context?: AppJobContext) {
-    const filename = await this.createBackup(appUrn, wasRunning, context);
+    let filename: string;
+
+    try {
+      filename = await this.createBackup(appUrn, wasRunning, context);
+    } catch (error) {
+      // A cancelled job is not a failed backup.
+      if (!context?.signal.aborted) {
+        await this.recordBackupResult(appUrn, { success: false, error: error instanceof Error ? error.message : String(error) });
+      }
+      throw error;
+    }
+
+    await this.recordBackupResult(appUrn, { success: true });
 
     try {
       const app = await this.appsRepository.getAppByUrn(appUrn);
@@ -132,6 +144,14 @@ export class BackupManager implements OnModuleInit {
     }
 
     return filename;
+  }
+
+  private async recordBackupResult(appUrn: AppUrn, result: Parameters<AppsRepository['recordBackupResult']>[1]) {
+    try {
+      await this.appsRepository.recordBackupResult(appUrn, result);
+    } catch (error) {
+      this.logger.warn(`Failed to record the backup status of ${appUrn}:`, error);
+    }
   }
 
   public async createBackup(appUrn: AppUrn, wasRunning = false, context?: AppJobContext, options?: { mode: 'full' }) {

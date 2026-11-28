@@ -1,7 +1,7 @@
 import { updateAppSettingsMutation } from '@/api-client/@tanstack/react-query.gen';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { ScrollArea } from '@/components/ui/ScrollArea';
-import type { AppInfo, AppStatus } from '@/types/app.types';
+import type { AppInfo, AppPluginSection, AppStatus } from '@/types/app.types';
 import type { TranslatableError } from '@/types/error.types';
 import { useMutation } from '@tanstack/react-query';
 import type React from 'react';
@@ -17,9 +17,10 @@ interface IProps {
   isOpen: boolean;
   onClose: () => void;
   status?: AppStatus;
+  pluginSections?: AppPluginSection[];
 }
 
-export const UpdateSettingsDialog: React.FC<IProps> = ({ info, config, isOpen, onClose }) => {
+export const UpdateSettingsDialog: React.FC<IProps> = ({ info, config, isOpen, onClose, pluginSections }) => {
   const { t } = useTranslation();
   const formId = useId();
 
@@ -58,6 +59,7 @@ export const UpdateSettingsDialog: React.FC<IProps> = ({ info, config, isOpen, o
               formFields={info.form_fields}
               info={info}
               initialValues={{ ...config }}
+              pluginSections={pluginSections}
               formId={formId}
             />
           </DialogDescription>

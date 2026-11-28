@@ -5,6 +5,7 @@ import { BackupManagerModule } from '../backups/backup-manager.module';
 import { DockerModule } from '../docker/docker.module';
 import { EnvModule } from '../env/env.module';
 import { MarketplaceModule } from '../marketplace/marketplace.module';
+import { PluginsModule } from '../plugins/plugins.module';
 import { QueueModule } from '../queue/queue.module';
 import { AppLifecycleCommandFactory } from './app-lifecycle-command.factory';
 import { AppLifecycleController } from './app-lifecycle.controller';
@@ -27,7 +28,7 @@ import { AppJobService } from './services/app-job.service';
 import { AppMigrationService } from './services/app-migration.service';
 
 @Module({
-  imports: [QueueModule, AppsModule, EnvModule, DockerModule, MarketplaceModule, BackupManagerModule, SSEModule],
+  imports: [QueueModule, AppsModule, EnvModule, DockerModule, MarketplaceModule, BackupManagerModule, SSEModule, PluginsModule],
   providers: [
     AppJobService,
     AppOperationsService,

@@ -24,7 +24,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import './app-actions.css';
 import { ignoreAppVersionMutation, startAppMutation, unignoreAppVersionMutation } from '@/api-client/@tanstack/react-query.gen';
-import type { AppDetails, AppInfo, AppMetadata } from '@/types/app.types';
+import type { AppDetails, AppInfo, AppMetadata, AppPluginSection } from '@/types/app.types';
 import type { TranslatableError } from '@/types/error.types';
 import { useMutation } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -46,6 +46,7 @@ interface IProps {
   metadata: AppMetadata;
   localDomain?: string;
   sslPort?: number;
+  pluginSections?: AppPluginSection[];
 }
 
 interface BtnProps extends ButtonProps {
@@ -67,7 +68,7 @@ const ActionButton: React.FC<BtnProps> = (props) => {
 
 type OpenType = 'local' | 'domain' | 'local_domain';
 
-export const AppActions = ({ app, info, localDomain, metadata, sslPort }: IProps) => {
+export const AppActions = ({ app, info, localDomain, metadata, sslPort, pluginSections }: IProps) => {
   const installDisclosure = useDisclosure();
   const stopDisclosure = useDisclosure();
   const restartDisclosure = useDisclosure();
@@ -350,7 +351,7 @@ export const AppActions = ({ app, info, localDomain, metadata, sslPort }: IProps
 
   return (
     <>
-      <InstallDialog isOpen={installDisclosure.isOpen} onClose={installDisclosure.close} info={info} />
+      <InstallDialog isOpen={installDisclosure.isOpen} onClose={installDisclosure.close} info={info} pluginSections={pluginSections} />
       <StopDialog isOpen={stopDisclosure.isOpen} onClose={stopDisclosure.close} info={info} />
       <RestartDialog isOpen={restartDisclosure.isOpen} onClose={restartDisclosure.close} info={info} />
       <UninstallDialog isOpen={uninstallDisclosure.isOpen} onClose={uninstallDisclosure.close} info={info} />
@@ -360,6 +361,7 @@ export const AppActions = ({ app, info, localDomain, metadata, sslPort }: IProps
         onClose={updateSettingsDisclosure.close}
         info={info}
         config={app?.config ?? {}}
+        pluginSections={pluginSections}
       />
       <TemplateSyncDialog appUrn={info.urn} isOpen={syncTemplateDisclosure.isOpen} onClose={syncTemplateDisclosure.close} />
       <div className="mt-1 btn-list d-flex">

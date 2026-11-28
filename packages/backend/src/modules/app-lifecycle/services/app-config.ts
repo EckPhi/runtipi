@@ -15,6 +15,8 @@ const SETTING_KEYS = new Set([
   'skipPull',
   'skipRun',
   'forcePull',
+  // Per-app plugin settings, keyed by plugin urn. Validated by AppValidationService.
+  'plugins',
 ]);
 
 export const getAppConfigUpdate = (appInfo: AppInfo, form: typeof appFormSchema.infer) => {

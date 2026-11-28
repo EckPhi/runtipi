@@ -68,7 +68,7 @@ export class McpAppsService {
     };
   }
 
-  accessUrls({ app, info, metadata }: Omit<Awaited<ReturnType<AppsService['getApp']>>, 'metadata'> & { metadata: { localSubdomain: string } }) {
+  accessUrls({ app, info, metadata }: Pick<Awaited<ReturnType<AppsService['getApp']>>, 'app' | 'info'> & { metadata: { localSubdomain: string } }) {
     if (!app || info.no_gui) return { direct: null, local: null, exposed: null };
 
     const { internalIp, userSettings } = this.config.getConfig();

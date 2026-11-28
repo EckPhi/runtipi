@@ -125,7 +125,7 @@ export class UpdateAppCommand extends AppLifecycleCommand {
       const targetAppInfo = await appFilesManager.getInstalledAppInfo(appUrn);
       if (!targetAppInfo) throw new Error(`App ${appUrn} config not found`);
 
-      const targetForm = await validation.validateUpdateConfigSettings(appUrn, targetAppInfo, { ...form }, appBeforeUpdate.id);
+      const targetForm = await validation.validateUpdateConfigSettings(appUrn, targetAppInfo, { ...form }, appBeforeUpdate.id, form);
 
       await this.ensureAppDir(appUrn, targetForm, { pruneContainers: false, persistSubnet: false });
       await appHelpers.generateEnvFile(appUrn, targetForm);

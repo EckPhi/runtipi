@@ -4,6 +4,7 @@ import { AppFilesManager } from '@/modules/apps/app-files-manager';
 import { DockerComposeBuilder } from '@/modules/docker/builders/compose.builder';
 import { MarketplaceService } from '@/modules/marketplace/marketplace.service';
 import { SubnetManagerService } from '@/modules/network/subnet-manager.service';
+import { PluginsService } from '@/modules/plugins/plugins.service';
 import type { AppEventFormInput } from '@/modules/queue/entities/app-events';
 import type { ModuleRef } from '@nestjs/core';
 import type { AppUrn } from '@runtipi/common/types';
@@ -23,6 +24,7 @@ export class AppLifecycleCommand {
     const logger = this.moduleRef.get(LoggerService, { strict: false });
     const subnetManager = this.moduleRef.get(SubnetManagerService, { strict: false });
     const configService = this.moduleRef.get(ConfigurationService, { strict: false });
+    const pluginsService = this.moduleRef.get(PluginsService, { strict: false });
 
     if (options.pruneContainers !== false) {
       const pruned = await this.docker
@@ -47,7 +49,11 @@ export class AppLifecycleCommand {
 
       const dockerComposeBuilder = new DockerComposeBuilder();
       const subnet = await subnetManager.allocateSubnet(appUrn, { persist: options.persistSubnet });
-      const composeFile = dockerComposeBuilder.getDockerCompose(composeJson.content, form, appUrn, subnet, architecture);
+      const plugins = (await pluginsService?.getComposePlugins(form)) ?? [];
+      const composeFile = dockerComposeBuilder.getDockerCompose(composeJson.content, form, appUrn, subnet, architecture, {
+        plugins,
+        onWarning: (message) => logger.warn(message),
+      });
 
       await appFilesManager.writeDockerComposeYml(appUrn, composeFile);
     } catch (err) {

@@ -90,6 +90,47 @@ export const updateAppStore = <ThrowOnError extends boolean = false>(options: Op
     }
 });
 
+export const searchCatalog = <ThrowOnError extends boolean = false>(options?: Options<SearchCatalogData, ThrowOnError>): RequestResult<SearchCatalogResponses, unknown, ThrowOnError> => (options?.client ?? client).get<SearchCatalogResponses, unknown, ThrowOnError>({ url: '/api/plugins/catalog/search', ...options });
+
+export const getCatalogPlugin = <ThrowOnError extends boolean = false>(options: Options<GetCatalogPluginData, ThrowOnError>): RequestResult<GetCatalogPluginResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetCatalogPluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/catalog/{urn}', ...options });
+
+export const getInstalledPlugins = <ThrowOnError extends boolean = false>(options?: Options<GetInstalledPluginsData, ThrowOnError>): RequestResult<GetInstalledPluginsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetInstalledPluginsResponses, unknown, ThrowOnError>({ url: '/api/plugins/installed', ...options });
+
+export const getInstalledPlugin = <ThrowOnError extends boolean = false>(options: Options<GetInstalledPluginData, ThrowOnError>): RequestResult<GetInstalledPluginResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetInstalledPluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/installed/{urn}', ...options });
+
+export const installPlugin = <ThrowOnError extends boolean = false>(options: Options<InstallPluginData, ThrowOnError>): RequestResult<InstallPluginResponses, unknown, ThrowOnError> => (options.client ?? client).post<InstallPluginResponses, unknown, ThrowOnError>({
+    url: '/api/plugins/{urn}/install',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const updatePlugin = <ThrowOnError extends boolean = false>(options: Options<UpdatePluginData, ThrowOnError>): RequestResult<UpdatePluginResponses, unknown, ThrowOnError> => (options.client ?? client).post<UpdatePluginResponses, unknown, ThrowOnError>({
+    url: '/api/plugins/{urn}/update',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const removePlugin = <ThrowOnError extends boolean = false>(options: Options<RemovePluginData, ThrowOnError>): RequestResult<RemovePluginResponses, unknown, ThrowOnError> => (options.client ?? client).delete<RemovePluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/{urn}', ...options });
+
+export const enablePlugin = <ThrowOnError extends boolean = false>(options: Options<EnablePluginData, ThrowOnError>): RequestResult<EnablePluginResponses, unknown, ThrowOnError> => (options.client ?? client).post<EnablePluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/{urn}/enable', ...options });
+
+export const disablePlugin = <ThrowOnError extends boolean = false>(options: Options<DisablePluginData, ThrowOnError>): RequestResult<DisablePluginResponses, unknown, ThrowOnError> => (options.client ?? client).post<DisablePluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/{urn}/disable', ...options });
+
+export const updateGlobalConfig = <ThrowOnError extends boolean = false>(options: Options<UpdateGlobalConfigData, ThrowOnError>): RequestResult<UpdateGlobalConfigResponses, unknown, ThrowOnError> => (options.client ?? client).patch<UpdateGlobalConfigResponses, unknown, ThrowOnError>({
+    url: '/api/plugins/{urn}/config',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
 export const getTranslation = <ThrowOnError extends boolean = false>(options: Options<GetTranslationData, ThrowOnError>): RequestResult<GetTranslationResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetTranslationResponses, unknown, ThrowOnError>({ url: '/api/i18n/locales/{ns}/{lng}.json', ...options });
 
 export const login = <ThrowOnError extends boolean = false>(options: Options<LoginData, ThrowOnError>): RequestResult<LoginResponses, unknown, ThrowOnError> => (options.client ?? client).post<LoginResponses, unknown, ThrowOnError>({
@@ -399,47 +440,6 @@ export const createAgentCredential = <ThrowOnError extends boolean = false>(opti
 });
 
 export const revokeAgentCredential = <ThrowOnError extends boolean = false>(options: Options<RevokeAgentCredentialData, ThrowOnError>): RequestResult<RevokeAgentCredentialResponses, unknown, ThrowOnError> => (options.client ?? client).delete<RevokeAgentCredentialResponses, unknown, ThrowOnError>({ url: '/api/agent-credentials/{id}', ...options });
-
-export const searchCatalog = <ThrowOnError extends boolean = false>(options?: Options<SearchCatalogData, ThrowOnError>): RequestResult<SearchCatalogResponses, unknown, ThrowOnError> => (options?.client ?? client).get<SearchCatalogResponses, unknown, ThrowOnError>({ url: '/api/plugins/catalog/search', ...options });
-
-export const getCatalogPlugin = <ThrowOnError extends boolean = false>(options: Options<GetCatalogPluginData, ThrowOnError>): RequestResult<GetCatalogPluginResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetCatalogPluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/catalog/{urn}', ...options });
-
-export const getInstalledPlugins = <ThrowOnError extends boolean = false>(options?: Options<GetInstalledPluginsData, ThrowOnError>): RequestResult<GetInstalledPluginsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetInstalledPluginsResponses, unknown, ThrowOnError>({ url: '/api/plugins/installed', ...options });
-
-export const getInstalledPlugin = <ThrowOnError extends boolean = false>(options: Options<GetInstalledPluginData, ThrowOnError>): RequestResult<GetInstalledPluginResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetInstalledPluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/installed/{urn}', ...options });
-
-export const installPlugin = <ThrowOnError extends boolean = false>(options: Options<InstallPluginData, ThrowOnError>): RequestResult<InstallPluginResponses, unknown, ThrowOnError> => (options.client ?? client).post<InstallPluginResponses, unknown, ThrowOnError>({
-    url: '/api/plugins/{urn}/install',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const updatePlugin = <ThrowOnError extends boolean = false>(options: Options<UpdatePluginData, ThrowOnError>): RequestResult<UpdatePluginResponses, unknown, ThrowOnError> => (options.client ?? client).post<UpdatePluginResponses, unknown, ThrowOnError>({
-    url: '/api/plugins/{urn}/update',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const removePlugin = <ThrowOnError extends boolean = false>(options: Options<RemovePluginData, ThrowOnError>): RequestResult<RemovePluginResponses, unknown, ThrowOnError> => (options.client ?? client).delete<RemovePluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/{urn}', ...options });
-
-export const enablePlugin = <ThrowOnError extends boolean = false>(options: Options<EnablePluginData, ThrowOnError>): RequestResult<EnablePluginResponses, unknown, ThrowOnError> => (options.client ?? client).post<EnablePluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/{urn}/enable', ...options });
-
-export const disablePlugin = <ThrowOnError extends boolean = false>(options: Options<DisablePluginData, ThrowOnError>): RequestResult<DisablePluginResponses, unknown, ThrowOnError> => (options.client ?? client).post<DisablePluginResponses, unknown, ThrowOnError>({ url: '/api/plugins/{urn}/disable', ...options });
-
-export const updateGlobalConfig = <ThrowOnError extends boolean = false>(options: Options<UpdateGlobalConfigData, ThrowOnError>): RequestResult<UpdateGlobalConfigResponses, unknown, ThrowOnError> => (options.client ?? client).patch<UpdateGlobalConfigResponses, unknown, ThrowOnError>({
-    url: '/api/plugins/{urn}/config',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
 
 export const seedDatabase = <ThrowOnError extends boolean = false>(options?: Options<SeedDatabaseData, ThrowOnError>): RequestResult<SeedDatabaseResponses, unknown, ThrowOnError> => (options?.client ?? client).post<SeedDatabaseResponses, unknown, ThrowOnError>({ url: '/api/debug/seed', ...options });
 

@@ -1,6 +1,6 @@
 import type { FormField } from '@runtipi/common/schemas';
 import { describe, expect, it } from 'vitest';
-import { validatePluginConfig } from '../plugin-config.helpers';
+import { getVisibleAppFields, validatePluginConfig } from '../plugin-config.helpers';
 
 const field = (data: Partial<FormField> & Pick<FormField, 'type' | 'env_variable'>): FormField => ({
   label: data.env_variable,
@@ -42,5 +42,22 @@ describe('validatePluginConfig', () => {
 
   it('rejects unknown keys', () => {
     expect(validatePluginConfig([field({ type: 'text', env_variable: 'A' })], { A: 'a', OLD: 'x' }).success).toBe(false);
+  });
+});
+
+describe('getVisibleAppFields', () => {
+  const fields: Array<FormField & { visible_when?: string }> = [
+    { type: 'boolean', label: 'Enabled', env_variable: 'ENABLED', required: false },
+    { type: 'boolean', label: 'Advanced', env_variable: 'ADVANCED', required: false, default: true, visible_when: 'ENABLED' },
+    { type: 'text', label: 'Tag', env_variable: 'TAG', required: false, visible_when: 'ADVANCED' },
+    { type: 'text', label: 'Loop', env_variable: 'LOOP', required: false, visible_when: 'LOOP' },
+  ];
+  const visible = (values: Record<string, unknown>) => getVisibleAppFields(fields, values).map((field) => field.env_variable);
+
+  it('shows a field while its toggle is on, following chains and defaults', () => {
+    expect(visible({})).toEqual(['ENABLED']);
+    expect(visible({ ENABLED: true })).toEqual(['ENABLED', 'ADVANCED', 'TAG']);
+    expect(visible({ ENABLED: true, ADVANCED: false })).toEqual(['ENABLED', 'ADVANCED']);
+    expect(visible({ ENABLED: false, ADVANCED: true })).toEqual(['ENABLED']);
   });
 });

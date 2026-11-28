@@ -416,6 +416,177 @@ export const updateAppStoreMutation = (options?: Partial<Options<UpdateAppStoreD
     return mutationOptions;
 };
 
+export const searchCatalogQueryKey = (options?: Options<SearchCatalogData>) => createQueryKey('searchCatalog', options);
+
+export const searchCatalogOptions = (options?: Options<SearchCatalogData>) => queryOptions<SearchCatalogResponse, DefaultError, SearchCatalogResponse, ReturnType<typeof searchCatalogQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await searchCatalog({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: searchCatalogQueryKey(options)
+});
+
+export const searchCatalogInfiniteQueryKey = (options?: Options<SearchCatalogData>): QueryKey<Options<SearchCatalogData>> => createQueryKey('searchCatalog', options, true);
+
+export const searchCatalogInfiniteOptions = (options?: Options<SearchCatalogData>) => {
+    const opts = infiniteQueryOptions<SearchCatalogResponse, DefaultError, InfiniteData<SearchCatalogResponse>, QueryKey<Options<SearchCatalogData>>, string | Pick<QueryKey<Options<SearchCatalogData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<SearchCatalogData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    cursor: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await searchCatalog({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: searchCatalogInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
+
+export const getCatalogPluginQueryKey = (options: Options<GetCatalogPluginData>) => createQueryKey('getCatalogPlugin', options);
+
+export const getCatalogPluginOptions = (options: Options<GetCatalogPluginData>) => queryOptions<GetCatalogPluginResponse, DefaultError, GetCatalogPluginResponse, ReturnType<typeof getCatalogPluginQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCatalogPlugin({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCatalogPluginQueryKey(options)
+});
+
+export const getInstalledPluginsQueryKey = (options?: Options<GetInstalledPluginsData>) => createQueryKey('getInstalledPlugins', options);
+
+export const getInstalledPluginsOptions = (options?: Options<GetInstalledPluginsData>) => queryOptions<GetInstalledPluginsResponse, DefaultError, GetInstalledPluginsResponse, ReturnType<typeof getInstalledPluginsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getInstalledPlugins({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getInstalledPluginsQueryKey(options)
+});
+
+export const getInstalledPluginQueryKey = (options: Options<GetInstalledPluginData>) => createQueryKey('getInstalledPlugin', options);
+
+export const getInstalledPluginOptions = (options: Options<GetInstalledPluginData>) => queryOptions<GetInstalledPluginResponse, DefaultError, GetInstalledPluginResponse, ReturnType<typeof getInstalledPluginQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getInstalledPlugin({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getInstalledPluginQueryKey(options)
+});
+
+export const installPluginMutation = (options?: Partial<Options<InstallPluginData>>): UseMutationOptions<InstallPluginResponse, DefaultError, Options<InstallPluginData>> => {
+    const mutationOptions: UseMutationOptions<InstallPluginResponse, DefaultError, Options<InstallPluginData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await installPlugin({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const updatePluginMutation = (options?: Partial<Options<UpdatePluginData>>): UseMutationOptions<UpdatePluginResponse, DefaultError, Options<UpdatePluginData>> => {
+    const mutationOptions: UseMutationOptions<UpdatePluginResponse, DefaultError, Options<UpdatePluginData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updatePlugin({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const removePluginMutation = (options?: Partial<Options<RemovePluginData>>): UseMutationOptions<RemovePluginResponse, DefaultError, Options<RemovePluginData>> => {
+    const mutationOptions: UseMutationOptions<RemovePluginResponse, DefaultError, Options<RemovePluginData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await removePlugin({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const enablePluginMutation = (options?: Partial<Options<EnablePluginData>>): UseMutationOptions<EnablePluginResponse, DefaultError, Options<EnablePluginData>> => {
+    const mutationOptions: UseMutationOptions<EnablePluginResponse, DefaultError, Options<EnablePluginData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await enablePlugin({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const disablePluginMutation = (options?: Partial<Options<DisablePluginData>>): UseMutationOptions<DisablePluginResponse, DefaultError, Options<DisablePluginData>> => {
+    const mutationOptions: UseMutationOptions<DisablePluginResponse, DefaultError, Options<DisablePluginData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await disablePlugin({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const updateGlobalConfigMutation = (options?: Partial<Options<UpdateGlobalConfigData>>): UseMutationOptions<UpdateGlobalConfigResponse, DefaultError, Options<UpdateGlobalConfigData>> => {
+    const mutationOptions: UseMutationOptions<UpdateGlobalConfigResponse, DefaultError, Options<UpdateGlobalConfigData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateGlobalConfig({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const getTranslationQueryKey = (options: Options<GetTranslationData>) => createQueryKey('getTranslation', options);
 
 export const getTranslationOptions = (options: Options<GetTranslationData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof getTranslationQueryKey>>({
@@ -1258,177 +1429,6 @@ export const revokeAgentCredentialMutation = (options?: Partial<Options<RevokeAg
     const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<RevokeAgentCredentialData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await revokeAgentCredential({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const searchCatalogQueryKey = (options?: Options<SearchCatalogData>) => createQueryKey('searchCatalog', options);
-
-export const searchCatalogOptions = (options?: Options<SearchCatalogData>) => queryOptions<SearchCatalogResponse, DefaultError, SearchCatalogResponse, ReturnType<typeof searchCatalogQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await searchCatalog({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: searchCatalogQueryKey(options)
-});
-
-export const searchCatalogInfiniteQueryKey = (options?: Options<SearchCatalogData>): QueryKey<Options<SearchCatalogData>> => createQueryKey('searchCatalog', options, true);
-
-export const searchCatalogInfiniteOptions = (options?: Options<SearchCatalogData>) => {
-    const opts = infiniteQueryOptions<SearchCatalogResponse, DefaultError, InfiniteData<SearchCatalogResponse>, QueryKey<Options<SearchCatalogData>>, string | Pick<QueryKey<Options<SearchCatalogData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
-    // @ts-ignore
-    {
-        queryFn: async ({ pageParam, queryKey, signal }) => {
-            // @ts-ignore
-            const page: Pick<QueryKey<Options<SearchCatalogData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
-                query: {
-                    cursor: pageParam
-                }
-            };
-            const params = createInfiniteParams(queryKey, page);
-            const { data } = await searchCatalog({
-                ...options,
-                ...params,
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: searchCatalogInfiniteQueryKey(options)
-    });
-    return opts as Omit<typeof opts, 'initialData'>;
-};
-
-export const getCatalogPluginQueryKey = (options: Options<GetCatalogPluginData>) => createQueryKey('getCatalogPlugin', options);
-
-export const getCatalogPluginOptions = (options: Options<GetCatalogPluginData>) => queryOptions<GetCatalogPluginResponse, DefaultError, GetCatalogPluginResponse, ReturnType<typeof getCatalogPluginQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getCatalogPlugin({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getCatalogPluginQueryKey(options)
-});
-
-export const getInstalledPluginsQueryKey = (options?: Options<GetInstalledPluginsData>) => createQueryKey('getInstalledPlugins', options);
-
-export const getInstalledPluginsOptions = (options?: Options<GetInstalledPluginsData>) => queryOptions<GetInstalledPluginsResponse, DefaultError, GetInstalledPluginsResponse, ReturnType<typeof getInstalledPluginsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getInstalledPlugins({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getInstalledPluginsQueryKey(options)
-});
-
-export const getInstalledPluginQueryKey = (options: Options<GetInstalledPluginData>) => createQueryKey('getInstalledPlugin', options);
-
-export const getInstalledPluginOptions = (options: Options<GetInstalledPluginData>) => queryOptions<GetInstalledPluginResponse, DefaultError, GetInstalledPluginResponse, ReturnType<typeof getInstalledPluginQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getInstalledPlugin({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getInstalledPluginQueryKey(options)
-});
-
-export const installPluginMutation = (options?: Partial<Options<InstallPluginData>>): UseMutationOptions<InstallPluginResponse, DefaultError, Options<InstallPluginData>> => {
-    const mutationOptions: UseMutationOptions<InstallPluginResponse, DefaultError, Options<InstallPluginData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await installPlugin({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const updatePluginMutation = (options?: Partial<Options<UpdatePluginData>>): UseMutationOptions<UpdatePluginResponse, DefaultError, Options<UpdatePluginData>> => {
-    const mutationOptions: UseMutationOptions<UpdatePluginResponse, DefaultError, Options<UpdatePluginData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await updatePlugin({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const removePluginMutation = (options?: Partial<Options<RemovePluginData>>): UseMutationOptions<RemovePluginResponse, DefaultError, Options<RemovePluginData>> => {
-    const mutationOptions: UseMutationOptions<RemovePluginResponse, DefaultError, Options<RemovePluginData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await removePlugin({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const enablePluginMutation = (options?: Partial<Options<EnablePluginData>>): UseMutationOptions<EnablePluginResponse, DefaultError, Options<EnablePluginData>> => {
-    const mutationOptions: UseMutationOptions<EnablePluginResponse, DefaultError, Options<EnablePluginData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await enablePlugin({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const disablePluginMutation = (options?: Partial<Options<DisablePluginData>>): UseMutationOptions<DisablePluginResponse, DefaultError, Options<DisablePluginData>> => {
-    const mutationOptions: UseMutationOptions<DisablePluginResponse, DefaultError, Options<DisablePluginData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await disablePlugin({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const updateGlobalConfigMutation = (options?: Partial<Options<UpdateGlobalConfigData>>): UseMutationOptions<UpdateGlobalConfigResponse, DefaultError, Options<UpdateGlobalConfigData>> => {
-    const mutationOptions: UseMutationOptions<UpdateGlobalConfigResponse, DefaultError, Options<UpdateGlobalConfigData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await updateGlobalConfig({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

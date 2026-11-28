@@ -362,6 +362,32 @@ export type GetAppDto = {
         latestDockerVersion?: string;
         minTipiVersion?: string | null;
     };
+    pluginSections: Array<{
+        applicableServices: Array<string>;
+        description: string;
+        fields: Array<{
+            env_variable: string;
+            label: string;
+            required: boolean;
+            type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+            default?: number | string | boolean;
+            encoding?: 'base64' | 'hex';
+            hint?: string;
+            max?: number;
+            min?: number;
+            options?: Array<{
+                label: string;
+                value: string;
+            }>;
+            pattern_error?: string;
+            placeholder?: string;
+            regex?: string;
+            visible_when?: string;
+        }>;
+        name: string;
+        title: string;
+        urn: string;
+    }>;
     app?: {
         createdAt: number;
         domain: string | null;
@@ -443,6 +469,478 @@ export type UpdateAppStoreBodyDto = {
 
 export type UpdateAppStoreDto = {
     success: boolean;
+};
+
+export type SearchPluginsDto = {
+    data: Array<{
+        author: string;
+        available: boolean;
+        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+        compatibility: {
+            compatible: boolean;
+            minTipiVersion: string | null;
+            reason: 'deprecated' | 'min_tipi_version' | 'unavailable' | null;
+        };
+        deprecated: boolean;
+        description: string;
+        id: string;
+        installed: boolean;
+        name: string;
+        settings: {
+            global: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+            per_app: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+                visible_when?: string;
+            }>;
+        };
+        short_desc: string;
+        source: string;
+        tipi_version: number;
+        urn: string;
+        version: string;
+        app_settings?: {
+            applies_to: {
+                exclude_network_mode: boolean;
+                services: 'all' | 'main';
+            };
+            compose_patches: Array<{
+                labels: {
+                    [key: string]: string;
+                };
+                op: 'add_labels';
+                when: string;
+            } | {
+                network: string;
+                op: 'add_network';
+                when: string;
+                aliases?: Array<string>;
+            }>;
+            description: string;
+            title?: string;
+        };
+        min_tipi_version?: string;
+        website?: string;
+    }>;
+    total: number;
+    nextCursor?: string | null;
+};
+
+export type PluginDetailsDto = {
+    compatibility: {
+        compatible: boolean;
+        minTipiVersion: string | null;
+        reason: 'deprecated' | 'min_tipi_version' | 'unavailable' | null;
+    };
+    info: {
+        author: string;
+        available: boolean;
+        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+        deprecated: boolean;
+        description: string;
+        id: string;
+        name: string;
+        settings: {
+            global: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+            per_app: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+                visible_when?: string;
+            }>;
+        };
+        short_desc: string;
+        source: string;
+        tipi_version: number;
+        urn: string;
+        version: string;
+        app_settings?: {
+            applies_to: {
+                exclude_network_mode: boolean;
+                services: 'all' | 'main';
+            };
+            compose_patches: Array<{
+                labels: {
+                    [key: string]: string;
+                };
+                op: 'add_labels';
+                when: string;
+            } | {
+                network: string;
+                op: 'add_network';
+                when: string;
+                aliases?: Array<string>;
+            }>;
+            description: string;
+            title?: string;
+        };
+        min_tipi_version?: string;
+        website?: string;
+    };
+    installed: {
+        createdAt: number;
+        enabled: boolean;
+        globalConfig: {
+            [key: string]: number | string | boolean;
+        };
+        id: number;
+        info: {
+            author: string;
+            available: boolean;
+            capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+            deprecated: boolean;
+            description: string;
+            id: string;
+            name: string;
+            settings: {
+                global: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+                per_app: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                    visible_when?: string;
+                }>;
+            };
+            short_desc: string;
+            source: string;
+            tipi_version: number;
+            urn: string;
+            version: string;
+            app_settings?: {
+                applies_to: {
+                    exclude_network_mode: boolean;
+                    services: 'all' | 'main';
+                };
+                compose_patches: Array<{
+                    labels: {
+                        [key: string]: string;
+                    };
+                    op: 'add_labels';
+                    when: string;
+                } | {
+                    network: string;
+                    op: 'add_network';
+                    when: string;
+                    aliases?: Array<string>;
+                }>;
+                description: string;
+                title?: string;
+            };
+            min_tipi_version?: string;
+            website?: string;
+        } | null;
+        installedVersion: string;
+        latestTipiVersion: number | null;
+        latestVersion: string | null;
+        pluginId: string;
+        pluginStoreSlug: string;
+        tipiVersion: number;
+        updateAvailable: boolean;
+        updatedAt: number;
+        urn: string;
+    } | null;
+    updateAvailable: boolean;
+};
+
+export type InstalledPluginsDto = {
+    plugins: Array<{
+        createdAt: number;
+        enabled: boolean;
+        globalConfig: {
+            [key: string]: number | string | boolean;
+        };
+        id: number;
+        info: {
+            author: string;
+            available: boolean;
+            capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+            deprecated: boolean;
+            description: string;
+            id: string;
+            name: string;
+            settings: {
+                global: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                }>;
+                per_app: Array<{
+                    env_variable: string;
+                    label: string;
+                    required: boolean;
+                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                    default?: number | string | boolean;
+                    encoding?: 'base64' | 'hex';
+                    hint?: string;
+                    max?: number;
+                    min?: number;
+                    options?: Array<{
+                        label: string;
+                        value: string;
+                    }>;
+                    pattern_error?: string;
+                    placeholder?: string;
+                    regex?: string;
+                    visible_when?: string;
+                }>;
+            };
+            short_desc: string;
+            source: string;
+            tipi_version: number;
+            urn: string;
+            version: string;
+            app_settings?: {
+                applies_to: {
+                    exclude_network_mode: boolean;
+                    services: 'all' | 'main';
+                };
+                compose_patches: Array<{
+                    labels: {
+                        [key: string]: string;
+                    };
+                    op: 'add_labels';
+                    when: string;
+                } | {
+                    network: string;
+                    op: 'add_network';
+                    when: string;
+                    aliases?: Array<string>;
+                }>;
+                description: string;
+                title?: string;
+            };
+            min_tipi_version?: string;
+            website?: string;
+        } | null;
+        installedVersion: string;
+        latestTipiVersion: number | null;
+        latestVersion: string | null;
+        pluginId: string;
+        pluginStoreSlug: string;
+        tipiVersion: number;
+        updateAvailable: boolean;
+        updatedAt: number;
+        urn: string;
+    }>;
+};
+
+export type InstalledPluginDto = {
+    createdAt: number;
+    enabled: boolean;
+    globalConfig: {
+        [key: string]: number | string | boolean;
+    };
+    id: number;
+    info: {
+        author: string;
+        available: boolean;
+        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
+        deprecated: boolean;
+        description: string;
+        id: string;
+        name: string;
+        settings: {
+            global: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+            }>;
+            per_app: Array<{
+                env_variable: string;
+                label: string;
+                required: boolean;
+                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
+                default?: number | string | boolean;
+                encoding?: 'base64' | 'hex';
+                hint?: string;
+                max?: number;
+                min?: number;
+                options?: Array<{
+                    label: string;
+                    value: string;
+                }>;
+                pattern_error?: string;
+                placeholder?: string;
+                regex?: string;
+                visible_when?: string;
+            }>;
+        };
+        short_desc: string;
+        source: string;
+        tipi_version: number;
+        urn: string;
+        version: string;
+        app_settings?: {
+            applies_to: {
+                exclude_network_mode: boolean;
+                services: 'all' | 'main';
+            };
+            compose_patches: Array<{
+                labels: {
+                    [key: string]: string;
+                };
+                op: 'add_labels';
+                when: string;
+            } | {
+                network: string;
+                op: 'add_network';
+                when: string;
+                aliases?: Array<string>;
+            }>;
+            description: string;
+            title?: string;
+        };
+        min_tipi_version?: string;
+        website?: string;
+    } | null;
+    installedVersion: string;
+    latestTipiVersion: number | null;
+    latestVersion: string | null;
+    pluginId: string;
+    pluginStoreSlug: string;
+    tipiVersion: number;
+    updateAvailable: boolean;
+    updatedAt: number;
+    urn: string;
+};
+
+export type InstallPluginBodyDto = {
+    globalConfig?: {
+        [key: string]: number | string | boolean;
+    };
+};
+
+export type PluginSuccessDto = {
+    success: boolean;
+};
+
+export type UpdatePluginBodyDto = {
+    globalConfig?: {
+        [key: string]: number | string | boolean;
+    };
+};
+
+export type UpdatePluginConfigBodyDto = {
+    globalConfig: {
+        [key: string]: number | string | boolean;
+    };
 };
 
 export type LoginBody = {
@@ -789,373 +1287,6 @@ export type CreatedAgentCredentialDto = {
     token: string;
 };
 
-export type SearchPluginsDto = {
-    data: Array<{
-        author: string;
-        available: boolean;
-        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
-        compatibility: {
-            compatible: boolean;
-            minTipiVersion: string | null;
-            reason: 'deprecated' | 'min_tipi_version' | 'unavailable' | null;
-        };
-        deprecated: boolean;
-        description: string;
-        id: string;
-        installed: boolean;
-        name: string;
-        settings: {
-            global: Array<{
-                env_variable: string;
-                label: string;
-                required: boolean;
-                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                default?: number | string | boolean;
-                encoding?: 'base64' | 'hex';
-                hint?: string;
-                max?: number;
-                min?: number;
-                options?: Array<{
-                    label: string;
-                    value: string;
-                }>;
-                pattern_error?: string;
-                placeholder?: string;
-                regex?: string;
-            }>;
-            per_app: Array<{
-                env_variable: string;
-                label: string;
-                required: boolean;
-                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                default?: number | string | boolean;
-                encoding?: 'base64' | 'hex';
-                hint?: string;
-                max?: number;
-                min?: number;
-                options?: Array<{
-                    label: string;
-                    value: string;
-                }>;
-                pattern_error?: string;
-                placeholder?: string;
-                regex?: string;
-            }>;
-        };
-        short_desc: string;
-        source: string;
-        tipi_version: number;
-        urn: string;
-        version: string;
-        min_tipi_version?: string;
-        website?: string;
-    }>;
-    total: number;
-    nextCursor?: string | null;
-};
-
-export type PluginDetailsDto = {
-    compatibility: {
-        compatible: boolean;
-        minTipiVersion: string | null;
-        reason: 'deprecated' | 'min_tipi_version' | 'unavailable' | null;
-    };
-    info: {
-        author: string;
-        available: boolean;
-        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
-        deprecated: boolean;
-        description: string;
-        id: string;
-        name: string;
-        settings: {
-            global: Array<{
-                env_variable: string;
-                label: string;
-                required: boolean;
-                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                default?: number | string | boolean;
-                encoding?: 'base64' | 'hex';
-                hint?: string;
-                max?: number;
-                min?: number;
-                options?: Array<{
-                    label: string;
-                    value: string;
-                }>;
-                pattern_error?: string;
-                placeholder?: string;
-                regex?: string;
-            }>;
-            per_app: Array<{
-                env_variable: string;
-                label: string;
-                required: boolean;
-                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                default?: number | string | boolean;
-                encoding?: 'base64' | 'hex';
-                hint?: string;
-                max?: number;
-                min?: number;
-                options?: Array<{
-                    label: string;
-                    value: string;
-                }>;
-                pattern_error?: string;
-                placeholder?: string;
-                regex?: string;
-            }>;
-        };
-        short_desc: string;
-        source: string;
-        tipi_version: number;
-        urn: string;
-        version: string;
-        min_tipi_version?: string;
-        website?: string;
-    };
-    installed: {
-        createdAt: number;
-        enabled: boolean;
-        globalConfig: {
-            [key: string]: number | string | boolean;
-        };
-        id: number;
-        info: {
-            author: string;
-            available: boolean;
-            capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
-            deprecated: boolean;
-            description: string;
-            id: string;
-            name: string;
-            settings: {
-                global: Array<{
-                    env_variable: string;
-                    label: string;
-                    required: boolean;
-                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                    default?: number | string | boolean;
-                    encoding?: 'base64' | 'hex';
-                    hint?: string;
-                    max?: number;
-                    min?: number;
-                    options?: Array<{
-                        label: string;
-                        value: string;
-                    }>;
-                    pattern_error?: string;
-                    placeholder?: string;
-                    regex?: string;
-                }>;
-                per_app: Array<{
-                    env_variable: string;
-                    label: string;
-                    required: boolean;
-                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                    default?: number | string | boolean;
-                    encoding?: 'base64' | 'hex';
-                    hint?: string;
-                    max?: number;
-                    min?: number;
-                    options?: Array<{
-                        label: string;
-                        value: string;
-                    }>;
-                    pattern_error?: string;
-                    placeholder?: string;
-                    regex?: string;
-                }>;
-            };
-            short_desc: string;
-            source: string;
-            tipi_version: number;
-            urn: string;
-            version: string;
-            min_tipi_version?: string;
-            website?: string;
-        } | null;
-        installedVersion: string;
-        latestTipiVersion: number | null;
-        latestVersion: string | null;
-        pluginId: string;
-        pluginStoreSlug: string;
-        tipiVersion: number;
-        updateAvailable: boolean;
-        updatedAt: number;
-        urn: string;
-    } | null;
-    updateAvailable: boolean;
-};
-
-export type InstalledPluginsDto = {
-    plugins: Array<{
-        createdAt: number;
-        enabled: boolean;
-        globalConfig: {
-            [key: string]: number | string | boolean;
-        };
-        id: number;
-        info: {
-            author: string;
-            available: boolean;
-            capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
-            deprecated: boolean;
-            description: string;
-            id: string;
-            name: string;
-            settings: {
-                global: Array<{
-                    env_variable: string;
-                    label: string;
-                    required: boolean;
-                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                    default?: number | string | boolean;
-                    encoding?: 'base64' | 'hex';
-                    hint?: string;
-                    max?: number;
-                    min?: number;
-                    options?: Array<{
-                        label: string;
-                        value: string;
-                    }>;
-                    pattern_error?: string;
-                    placeholder?: string;
-                    regex?: string;
-                }>;
-                per_app: Array<{
-                    env_variable: string;
-                    label: string;
-                    required: boolean;
-                    type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                    default?: number | string | boolean;
-                    encoding?: 'base64' | 'hex';
-                    hint?: string;
-                    max?: number;
-                    min?: number;
-                    options?: Array<{
-                        label: string;
-                        value: string;
-                    }>;
-                    pattern_error?: string;
-                    placeholder?: string;
-                    regex?: string;
-                }>;
-            };
-            short_desc: string;
-            source: string;
-            tipi_version: number;
-            urn: string;
-            version: string;
-            min_tipi_version?: string;
-            website?: string;
-        } | null;
-        installedVersion: string;
-        latestTipiVersion: number | null;
-        latestVersion: string | null;
-        pluginId: string;
-        pluginStoreSlug: string;
-        tipiVersion: number;
-        updateAvailable: boolean;
-        updatedAt: number;
-        urn: string;
-    }>;
-};
-
-export type InstalledPluginDto = {
-    createdAt: number;
-    enabled: boolean;
-    globalConfig: {
-        [key: string]: number | string | boolean;
-    };
-    id: number;
-    info: {
-        author: string;
-        available: boolean;
-        capabilities: Array<'backup-backend' | 'compose' | 'dashboard-widget'>;
-        deprecated: boolean;
-        description: string;
-        id: string;
-        name: string;
-        settings: {
-            global: Array<{
-                env_variable: string;
-                label: string;
-                required: boolean;
-                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                default?: number | string | boolean;
-                encoding?: 'base64' | 'hex';
-                hint?: string;
-                max?: number;
-                min?: number;
-                options?: Array<{
-                    label: string;
-                    value: string;
-                }>;
-                pattern_error?: string;
-                placeholder?: string;
-                regex?: string;
-            }>;
-            per_app: Array<{
-                env_variable: string;
-                label: string;
-                required: boolean;
-                type: 'boolean' | 'email' | 'fqdn' | 'fqdnip' | 'ip' | 'number' | 'password' | 'random' | 'text' | 'url';
-                default?: number | string | boolean;
-                encoding?: 'base64' | 'hex';
-                hint?: string;
-                max?: number;
-                min?: number;
-                options?: Array<{
-                    label: string;
-                    value: string;
-                }>;
-                pattern_error?: string;
-                placeholder?: string;
-                regex?: string;
-            }>;
-        };
-        short_desc: string;
-        source: string;
-        tipi_version: number;
-        urn: string;
-        version: string;
-        min_tipi_version?: string;
-        website?: string;
-    } | null;
-    installedVersion: string;
-    latestTipiVersion: number | null;
-    latestVersion: string | null;
-    pluginId: string;
-    pluginStoreSlug: string;
-    tipiVersion: number;
-    updateAvailable: boolean;
-    updatedAt: number;
-    urn: string;
-};
-
-export type InstallPluginBodyDto = {
-    globalConfig?: {
-        [key: string]: number | string | boolean;
-    };
-};
-
-export type PluginSuccessDto = {
-    success: boolean;
-};
-
-export type UpdatePluginBodyDto = {
-    globalConfig?: {
-        [key: string]: number | string | boolean;
-    };
-};
-
-export type UpdatePluginConfigBodyDto = {
-    globalConfig: {
-        [key: string]: number | string | boolean;
-    };
-};
-
 export type UserContextData = {
     body?: never;
     path?: never;
@@ -1449,6 +1580,158 @@ export type UpdateAppStoreResponses = {
 };
 
 export type UpdateAppStoreResponse = UpdateAppStoreResponses[keyof UpdateAppStoreResponses];
+
+export type SearchCatalogData = {
+    body?: never;
+    path?: never;
+    query?: {
+        capability?: 'backup-backend' | 'compose' | 'dashboard-widget';
+        cursor?: string;
+        pageSize?: number | string;
+        search?: string;
+        storeId?: string;
+    };
+    url: '/api/plugins/catalog/search';
+};
+
+export type SearchCatalogResponses = {
+    default: SearchPluginsDto;
+};
+
+export type SearchCatalogResponse = SearchCatalogResponses[keyof SearchCatalogResponses];
+
+export type GetCatalogPluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/catalog/{urn}';
+};
+
+export type GetCatalogPluginResponses = {
+    default: PluginDetailsDto;
+};
+
+export type GetCatalogPluginResponse = GetCatalogPluginResponses[keyof GetCatalogPluginResponses];
+
+export type GetInstalledPluginsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/plugins/installed';
+};
+
+export type GetInstalledPluginsResponses = {
+    default: InstalledPluginsDto;
+};
+
+export type GetInstalledPluginsResponse = GetInstalledPluginsResponses[keyof GetInstalledPluginsResponses];
+
+export type GetInstalledPluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/installed/{urn}';
+};
+
+export type GetInstalledPluginResponses = {
+    default: InstalledPluginDto;
+};
+
+export type GetInstalledPluginResponse = GetInstalledPluginResponses[keyof GetInstalledPluginResponses];
+
+export type InstallPluginData = {
+    body: InstallPluginBodyDto;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/install';
+};
+
+export type InstallPluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type InstallPluginResponse = InstallPluginResponses[keyof InstallPluginResponses];
+
+export type UpdatePluginData = {
+    body: UpdatePluginBodyDto;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/update';
+};
+
+export type UpdatePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type UpdatePluginResponse = UpdatePluginResponses[keyof UpdatePluginResponses];
+
+export type RemovePluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}';
+};
+
+export type RemovePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type RemovePluginResponse = RemovePluginResponses[keyof RemovePluginResponses];
+
+export type EnablePluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/enable';
+};
+
+export type EnablePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type EnablePluginResponse = EnablePluginResponses[keyof EnablePluginResponses];
+
+export type DisablePluginData = {
+    body?: never;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/disable';
+};
+
+export type DisablePluginResponses = {
+    default: PluginSuccessDto;
+};
+
+export type DisablePluginResponse = DisablePluginResponses[keyof DisablePluginResponses];
+
+export type UpdateGlobalConfigData = {
+    body: UpdatePluginConfigBodyDto;
+    path: {
+        urn: string;
+    };
+    query?: never;
+    url: '/api/plugins/{urn}/config';
+};
+
+export type UpdateGlobalConfigResponses = {
+    default: PluginSuccessDto;
+};
+
+export type UpdateGlobalConfigResponse = UpdateGlobalConfigResponses[keyof UpdateGlobalConfigResponses];
 
 export type GetTranslationData = {
     body?: never;
@@ -2293,158 +2576,6 @@ export type RevokeAgentCredentialData = {
 export type RevokeAgentCredentialResponses = {
     200: unknown;
 };
-
-export type SearchCatalogData = {
-    body?: never;
-    path?: never;
-    query?: {
-        capability?: 'backup-backend' | 'compose' | 'dashboard-widget';
-        cursor?: string;
-        pageSize?: number | string;
-        search?: string;
-        storeId?: string;
-    };
-    url: '/api/plugins/catalog/search';
-};
-
-export type SearchCatalogResponses = {
-    default: SearchPluginsDto;
-};
-
-export type SearchCatalogResponse = SearchCatalogResponses[keyof SearchCatalogResponses];
-
-export type GetCatalogPluginData = {
-    body?: never;
-    path: {
-        urn: string;
-    };
-    query?: never;
-    url: '/api/plugins/catalog/{urn}';
-};
-
-export type GetCatalogPluginResponses = {
-    default: PluginDetailsDto;
-};
-
-export type GetCatalogPluginResponse = GetCatalogPluginResponses[keyof GetCatalogPluginResponses];
-
-export type GetInstalledPluginsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/plugins/installed';
-};
-
-export type GetInstalledPluginsResponses = {
-    default: InstalledPluginsDto;
-};
-
-export type GetInstalledPluginsResponse = GetInstalledPluginsResponses[keyof GetInstalledPluginsResponses];
-
-export type GetInstalledPluginData = {
-    body?: never;
-    path: {
-        urn: string;
-    };
-    query?: never;
-    url: '/api/plugins/installed/{urn}';
-};
-
-export type GetInstalledPluginResponses = {
-    default: InstalledPluginDto;
-};
-
-export type GetInstalledPluginResponse = GetInstalledPluginResponses[keyof GetInstalledPluginResponses];
-
-export type InstallPluginData = {
-    body: InstallPluginBodyDto;
-    path: {
-        urn: string;
-    };
-    query?: never;
-    url: '/api/plugins/{urn}/install';
-};
-
-export type InstallPluginResponses = {
-    default: PluginSuccessDto;
-};
-
-export type InstallPluginResponse = InstallPluginResponses[keyof InstallPluginResponses];
-
-export type UpdatePluginData = {
-    body: UpdatePluginBodyDto;
-    path: {
-        urn: string;
-    };
-    query?: never;
-    url: '/api/plugins/{urn}/update';
-};
-
-export type UpdatePluginResponses = {
-    default: PluginSuccessDto;
-};
-
-export type UpdatePluginResponse = UpdatePluginResponses[keyof UpdatePluginResponses];
-
-export type RemovePluginData = {
-    body?: never;
-    path: {
-        urn: string;
-    };
-    query?: never;
-    url: '/api/plugins/{urn}';
-};
-
-export type RemovePluginResponses = {
-    default: PluginSuccessDto;
-};
-
-export type RemovePluginResponse = RemovePluginResponses[keyof RemovePluginResponses];
-
-export type EnablePluginData = {
-    body?: never;
-    path: {
-        urn: string;
-    };
-    query?: never;
-    url: '/api/plugins/{urn}/enable';
-};
-
-export type EnablePluginResponses = {
-    default: PluginSuccessDto;
-};
-
-export type EnablePluginResponse = EnablePluginResponses[keyof EnablePluginResponses];
-
-export type DisablePluginData = {
-    body?: never;
-    path: {
-        urn: string;
-    };
-    query?: never;
-    url: '/api/plugins/{urn}/disable';
-};
-
-export type DisablePluginResponses = {
-    default: PluginSuccessDto;
-};
-
-export type DisablePluginResponse = DisablePluginResponses[keyof DisablePluginResponses];
-
-export type UpdateGlobalConfigData = {
-    body: UpdatePluginConfigBodyDto;
-    path: {
-        urn: string;
-    };
-    query?: never;
-    url: '/api/plugins/{urn}/config';
-};
-
-export type UpdateGlobalConfigResponses = {
-    default: PluginSuccessDto;
-};
-
-export type UpdateGlobalConfigResponse = UpdateGlobalConfigResponses[keyof UpdateGlobalConfigResponses];
 
 export type SeedDatabaseData = {
     body?: never;

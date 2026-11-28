@@ -29,7 +29,7 @@ export default () => {
 
   const { userSettings } = useAppContext();
 
-  const { info, app, metadata } = getApp.data;
+  const { info, app, metadata, pluginSections } = getApp.data;
 
   return (
     <div className="card" data-testid="app-details">
@@ -44,7 +44,14 @@ export default () => {
           <div className="mb-1">
             <AppStatus status={app?.status ?? 'missing'} />
           </div>
-          <AppActions app={app} metadata={metadata} info={info} localDomain={userSettings.localDomain} sslPort={userSettings.sslPort} />
+          <AppActions
+            app={app}
+            metadata={metadata}
+            info={info}
+            localDomain={userSettings.localDomain}
+            sslPort={userSettings.sslPort}
+            pluginSections={pluginSections}
+          />
         </div>
       </div>
       <AppJobProgress appUrn={info.urn} />

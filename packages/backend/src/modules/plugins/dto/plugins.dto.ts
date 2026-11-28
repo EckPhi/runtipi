@@ -1,4 +1,4 @@
-import { PLUGIN_CAPABILITIES, pluginManifestSchema } from '@runtipi/common/schemas';
+import { PLUGIN_CAPABILITIES, pluginManifestObjectSchema } from '@runtipi/common/schemas';
 import { type } from 'arktype';
 import { createArkDto } from 'nestjs-arktype';
 
@@ -18,7 +18,7 @@ const pluginCompatibilitySchema = type({
   reason: type("'min_tipi_version' | 'unavailable' | 'deprecated'").or('null'),
 });
 
-const catalogPluginSchema = pluginManifestSchema.merge({ installed: 'boolean', compatibility: pluginCompatibilitySchema });
+const catalogPluginSchema = pluginManifestObjectSchema.merge({ installed: 'boolean', compatibility: pluginCompatibilitySchema });
 
 const searchPluginsResponseSchema = type({
   data: catalogPluginSchema.array(),
@@ -37,14 +37,14 @@ const installedPluginSchema = type({
   globalConfig: pluginConfigSchema,
   createdAt: 'number',
   updatedAt: 'number',
-  info: pluginManifestSchema.or('null'),
+  info: pluginManifestObjectSchema.or('null'),
   latestVersion: type('string').or('null'),
   latestTipiVersion: type('number').or('null'),
   updateAvailable: 'boolean',
 });
 
 const pluginDetailsSchema = type({
-  info: pluginManifestSchema,
+  info: pluginManifestObjectSchema,
   compatibility: pluginCompatibilitySchema,
   installed: installedPluginSchema.or('null'),
   updateAvailable: 'boolean',

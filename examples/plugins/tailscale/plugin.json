@@ -1,0 +1,72 @@
+{
+  "id": "tailscale",
+  "name": "Tailscale",
+  "version": "1.0.0",
+  "tipi_version": 1,
+  "short_desc": "Attach apps to an existing Tailscale Docker network.",
+  "description": "Adds a Tailscale section to the settings of every app. When it is on, the main service of the app joins an existing external Docker network, for example the network of a Tailscale or TSDProxy container, next to the networks it already uses. The network has to exist before the app starts.",
+  "author": "runtipi",
+  "source": "https://github.com/EckPhi/runtipi/tree/develop/examples/plugins/tailscale",
+  "capabilities": ["compose"],
+  "settings": {
+    "global": [
+      {
+        "type": "text",
+        "label": "Docker network",
+        "hint": "Name of the existing Docker network the Tailscale container is attached to.",
+        "env_variable": "NETWORK_NAME",
+        "default": "tailscale",
+        "required": true,
+        "regex": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
+        "pattern_error": "Use letters, digits, dots, dashes and underscores only"
+      }
+    ],
+    "per_app": [
+      {
+        "type": "boolean",
+        "label": "Attach to the Tailscale network",
+        "env_variable": "ENABLED",
+        "default": false
+      },
+      {
+        "type": "boolean",
+        "label": "Expose with TSDProxy",
+        "hint": "Adds the labels TSDProxy uses to publish the app on your tailnet.",
+        "env_variable": "TSDPROXY",
+        "default": false,
+        "visible_when": "ENABLED"
+      },
+      {
+        "type": "text",
+        "label": "Tailnet hostname",
+        "hint": "Name of the app on your tailnet. Also used as its alias on the Docker network.",
+        "env_variable": "HOSTNAME",
+        "required": true,
+        "regex": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+        "pattern_error": "Use lowercase letters, digits and dashes only",
+        "visible_when": "TSDPROXY"
+      }
+    ]
+  },
+  "app_settings": {
+    "title": "Tailscale",
+    "description": "Attach the main service of this app to the Tailscale Docker network.",
+    "applies_to": { "exclude_network_mode": true, "services": "main" },
+    "compose_patches": [
+      {
+        "op": "add_network",
+        "when": "ENABLED",
+        "network": "{{plugin.NETWORK_NAME}}",
+        "aliases": ["{{app.HOSTNAME}}"]
+      },
+      {
+        "op": "add_labels",
+        "when": "TSDPROXY",
+        "labels": {
+          "tsdproxy.enable": "true",
+          "tsdproxy.name": "{{app.HOSTNAME}}"
+        }
+      }
+    ]
+  }
+}

@@ -10,6 +10,7 @@ import { MarketplaceService } from '@/modules/marketplace/marketplace.service';
 import { SubnetManagerService } from '@/modules/network/subnet-manager.service';
 import { convertLegacyToYaml } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
+import type { PluginsService } from '@/modules/plugins/plugins.service';
 import type { ModuleRef } from '@nestjs/core';
 import type Dockerode from 'dockerode';
 import { expect, test, vi } from 'vitest';
@@ -110,7 +111,7 @@ const createCommand = (
     [ConfigurationService, config],
     [FilesystemService, filesystem],
     [SubnetManagerService, subnetManager],
-    [AppValidationService, new AppValidationService(appsRepository, config, logger)],
+    [AppValidationService, new AppValidationService(appsRepository, config, logger, mock<PluginsService>())],
   ]);
 
   const moduleRef = { get: (token: unknown) => services.get(token) } as ModuleRef;

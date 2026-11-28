@@ -3,7 +3,7 @@ import { Alert, AlertDescription, AlertHeading, AlertIcon } from '@/components/u
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { ScrollArea } from '@/components/ui/ScrollArea';
 import { useAppStatus } from '@/modules/app/helpers/use-app-status';
-import type { AppInfo } from '@/types/app.types';
+import type { AppInfo, AppPluginSection } from '@/types/app.types';
 import type { TranslatableError } from '@/types/error.types';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
@@ -18,9 +18,10 @@ interface IProps {
   info: AppInfo;
   isOpen: boolean;
   onClose: () => void;
+  pluginSections?: AppPluginSection[];
 }
 
-export const InstallDialog: React.FC<IProps> = ({ info, isOpen, onClose }) => {
+export const InstallDialog: React.FC<IProps> = ({ info, isOpen, onClose, pluginSections }) => {
   const { t } = useTranslation();
   const { setOptimisticStatus } = useAppStatus();
   const formId = useId();
@@ -71,6 +72,7 @@ export const InstallDialog: React.FC<IProps> = ({ info, isOpen, onClose }) => {
               formFields={info.form_fields}
               info={info}
               formId={formId}
+              pluginSections={pluginSections}
             />
           </DialogDescription>
         </ScrollArea>

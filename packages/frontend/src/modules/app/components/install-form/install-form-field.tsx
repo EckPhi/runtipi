@@ -16,6 +16,8 @@ type IProps = {
   initialValue?: string;
   loading?: boolean;
   error?: string;
+  /** Form value path, defaults to the env variable of the field. Plugin settings use `plugins.<urn>.<env variable>`. */
+  name?: string;
 };
 
 /**
@@ -25,6 +27,9 @@ type IProps = {
  */
 export const InstallFormField = (props: IProps) => {
   const { field, control, register, initialValue, error, loading } = props;
+  const name = props.name ?? field.env_variable;
+  // CSS class used to anchor the hint tooltip, plugin paths contain dots and colons.
+  const hintClass = `hint-${name.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   const { t } = useTranslation();
 
   const label = (
@@ -33,10 +38,10 @@ export const InstallFormField = (props: IProps) => {
       {field.required && <span className="ms-1 text-danger">*</span>}
       {Boolean(field.hint) && (
         <>
-          <Tooltip className="tooltip" anchorSelect={`.${field.env_variable}`}>
+          <Tooltip className="tooltip" anchorSelect={`.${hintClass}`}>
             {field.hint}
           </Tooltip>
-          <span className={clsx('ms-1 form-help', field.env_variable)}>?</span>
+          <span className={clsx('ms-1 form-help', hintClass)}>?</span>
         </>
       )}
     </>
@@ -46,7 +51,7 @@ export const InstallFormField = (props: IProps) => {
     return (
       <Controller
         control={control}
-        name={field.env_variable}
+        name={name}
         defaultValue={(field.default as boolean) || false}
         render={({ field: { onChange, value, ref, ...rest } }) => (
           <Switch className="mb-3" ref={ref} checked={Boolean(value)} onCheckedChange={onChange} {...rest} label={label} />
@@ -59,7 +64,7 @@ export const InstallFormField = (props: IProps) => {
     return (
       <Controller
         control={control}
-        name={field.env_variable}
+        name={name}
         defaultValue={field.default as string}
         render={({ field: { onChange, value, ...rest } }) => (
           <Select value={value as string} defaultValue={initialValue} onValueChange={onChange} {...rest}>
@@ -103,7 +108,7 @@ export const InstallFormField = (props: IProps) => {
     return (
       <PasswordInput
         key={field.env_variable}
-        {...register(field.env_variable)}
+        {...register(name)}
         label={label}
         error={error}
         disabled={loading}
@@ -117,7 +122,7 @@ export const InstallFormField = (props: IProps) => {
   return (
     <Input
       key={field.env_variable}
-      {...register(field.env_variable)}
+      {...register(name)}
       label={label}
       error={error}
       disabled={loading}

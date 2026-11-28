@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, InputGroup } from '@/components/ui/Input';
 import { Switch } from '@/components/ui/Switch';
 import { useAppContext } from '@/context/app-context';
-import type { AppInfo, FormField } from '@/types/app.types';
+import type { AppInfo, AppPluginSection, FormField } from '@/types/app.types';
 import type { TranslatableError } from '@/types/error.types';
 import { extractAppUrn } from '@/utils/app-helpers';
 import type { AppUrn } from '@runtipi/common/types';
@@ -12,12 +12,20 @@ import { useMutation } from '@tanstack/react-query';
 import clsx from 'clsx';
 import type React from 'react';
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, type FieldError, get, useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from 'react-tooltip';
-import { hiddenTypes, validateAppConfig } from './form-validators';
+import { hiddenTypes, validateAppConfig, validateField } from './form-validators';
 import { InstallFormField } from './install-form-field';
+import {
+  PLUGIN_FORM_KEY,
+  fromPluginFormValues,
+  getSectionValues,
+  getVisiblePluginFields,
+  pluginFieldName,
+  toPluginFormValues,
+} from './plugin-sections';
 
 interface IProps {
   formFields?: FormField[];
@@ -26,6 +34,8 @@ interface IProps {
   info: AppInfo;
   loading?: boolean;
   formId: string;
+  /** Sections installed plugins add to the settings of this app. */
+  pluginSections?: AppPluginSection[];
 }
 
 export type FormValues = {
@@ -44,7 +54,17 @@ export type FormValues = {
 
 const typeFilter = (field: FormField) => !hiddenTypes.includes(field.type);
 
-export const InstallForm: React.FC<IProps> = ({ formFields = [], info, onSubmit, initialValues, loading, formId }) => {
+const NO_PLUGIN_SECTIONS: AppPluginSection[] = [];
+
+export const InstallForm: React.FC<IProps> = ({
+  formFields = [],
+  info,
+  onSubmit,
+  initialValues,
+  loading,
+  formId,
+  pluginSections = NO_PLUGIN_SECTIONS,
+}) => {
   const { t } = useTranslation();
   const { userSettings } = useAppContext();
   const { guestDashboard, localDomain, internalIp, domain, maxBackups: globalMaxBackups } = userSettings;
@@ -58,8 +78,9 @@ export const InstallForm: React.FC<IProps> = ({ formFields = [], info, onSubmit,
     setError,
     control,
   } = useForm<FormValues>({
-    defaultValues: initialValues,
+    defaultValues: { ...initialValues, [PLUGIN_FORM_KEY]: toPluginFormValues(pluginSections, initialValues?.plugins) },
   });
+  const watchPluginSettings = watch(PLUGIN_FORM_KEY);
   const watchExposed = watch('exposed', false);
   const watchOpenPort = watch('openPort', !info.force_expose);
   const watchExposedLocal = watch('exposedLocal', false);
@@ -206,6 +227,59 @@ export const InstallForm: React.FC<IProps> = ({ formFields = [], info, onSubmit,
     );
   };
 
+  const visiblePluginFields = (index: number, values: unknown) => {
+    const section = pluginSections[index];
+    return section ? getVisiblePluginFields(section.fields, getSectionValues(values, index)).filter(typeFilter) : [];
+  };
+
+  const renderPluginSection = (section: AppPluginSection, index: number) => {
+    const fields = visiblePluginFields(index, watchPluginSettings);
+    if (fields.length === 0) return null;
+
+    const storedValues = (initialValues?.plugins as Record<string, Record<string, unknown>> | undefined)?.[section.urn];
+
+    return (
+      <div key={section.urn} className="mb-3" data-testid={`plugin-section-${section.urn}`}>
+        <h3>{section.title}</h3>
+        {section.description && <p className="text-muted">{section.description}</p>}
+        {fields.map((field) => {
+          const name = pluginFieldName(index, field.env_variable);
+          return (
+            <InstallFormField
+              key={name}
+              name={name}
+              loading={loading}
+              initialValue={(storedValues?.[field.env_variable] ?? field.default) as string}
+              register={register}
+              field={field as FormField}
+              control={control}
+              error={(get(errors, name) as FieldError | undefined)?.message}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
+  const validatePluginSections = (values: FormValues) => {
+    let valid = true;
+
+    pluginSections.forEach((_, index) => {
+      for (const field of visiblePluginFields(index, values[PLUGIN_FORM_KEY])) {
+        const name = pluginFieldName(index, field.env_variable);
+        const value = get(values, name);
+        const error = validateField(field as FormField, typeof value === 'number' ? String(value) : value);
+
+        if (error) {
+          valid = false;
+          setError(name, { message: t(error.messageKey, error.params) });
+        }
+      }
+    });
+
+    return valid;
+  };
+
   const validate = (values: FormValues) => {
     const validationErrors = validateAppConfig(values, formFields);
 
@@ -215,8 +289,12 @@ export const InstallForm: React.FC<IProps> = ({ formFields = [], info, onSubmit,
       }
     }
 
-    if (Object.keys(validationErrors).length === 0) {
-      onSubmit(values);
+    const pluginsValid = validatePluginSections(values);
+
+    if (Object.keys(validationErrors).length === 0 && pluginsValid) {
+      const { [PLUGIN_FORM_KEY]: pluginValues, ...rest } = values;
+      const plugins = fromPluginFormValues(pluginSections, pluginValues, initialValues?.plugins);
+      onSubmit(plugins ? { ...rest, plugins } : rest);
     }
   };
 
@@ -306,6 +384,7 @@ export const InstallForm: React.FC<IProps> = ({ formFields = [], info, onSubmit,
           {renderExposeForm()}
         </>
       )}
+      {pluginSections.map(renderPluginSection)}
       <div className="mb-3">
         <Input
           type="number"

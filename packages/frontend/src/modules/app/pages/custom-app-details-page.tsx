@@ -24,7 +24,7 @@ export const CustomAppDetailsPage = () => {
   const [searchParams] = useSearchParams();
   const [bust, setBust] = useState(searchParams.get('bust'));
 
-  const { info, app, metadata } = getApp.data;
+  const { info, app, metadata, pluginSections } = getApp.data;
 
   const imageUrl = new URL(`/api/marketplace/apps/${params.appId}:_user/image`, window.location.origin);
 
@@ -64,7 +64,14 @@ export const CustomAppDetailsPage = () => {
           <div className="mb-1">
             <AppStatus status={app?.status ?? 'missing'} />
           </div>
-          <AppActions app={app} metadata={metadata} info={info} localDomain={userSettings.localDomain} sslPort={userSettings.sslPort} />
+          <AppActions
+            app={app}
+            metadata={metadata}
+            info={info}
+            localDomain={userSettings.localDomain}
+            sslPort={userSettings.sslPort}
+            pluginSections={pluginSections}
+          />
         </div>
       </div>
       <AppJobProgress appUrn={info.urn} />

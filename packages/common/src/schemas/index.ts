@@ -22,8 +22,11 @@ import {
 } from './app-info.js';
 import type { AppCategory, AppInfo, AppInfoInput, FieldType, FormField, RandomEncoding } from './app-info.js';
 
-import { PLUGIN_CAPABILITIES, pluginManifestSchema, pluginSettingsSchema } from './plugin-manifest.js';
+import { PLUGIN_CAPABILITIES, pluginManifestObjectSchema, pluginManifestSchema, pluginSettingsSchema } from './plugin-manifest.js';
 import type { PluginCapability, PluginManifest, PluginManifestInput, PluginSettings } from './plugin-manifest.js';
+
+import { WIDGET_METRICS, WIDGET_PERIODS, WIDGET_SOURCE_TYPES, WIDGET_SOURCES, WIDGET_TYPES, pluginWidgetSchema } from './plugin-widget.js';
+import type { PluginWidget, PluginWidgetInput, WidgetMetric, WidgetPeriod, WidgetSource, WidgetType } from './plugin-widget.js';
 
 import { type SSE, type Topic, sseSchema } from './sse.js';
 import { appJobSchema, type AppJob } from './app-job.js';
@@ -67,10 +70,23 @@ export {
   appJobSchema,
   type AppJob,
   PLUGIN_CAPABILITIES,
+  pluginManifestObjectSchema,
   pluginManifestSchema,
   pluginSettingsSchema,
   type PluginCapability,
   type PluginManifest,
   type PluginManifestInput,
   type PluginSettings,
+  WIDGET_METRICS,
+  WIDGET_PERIODS,
+  WIDGET_SOURCE_TYPES,
+  WIDGET_SOURCES,
+  WIDGET_TYPES,
+  pluginWidgetSchema,
+  type PluginWidget,
+  type PluginWidgetInput,
+  type WidgetMetric,
+  type WidgetPeriod,
+  type WidgetSource,
+  type WidgetType,
 };

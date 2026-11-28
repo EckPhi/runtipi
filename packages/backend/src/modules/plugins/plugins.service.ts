@@ -146,6 +146,17 @@ export class PluginsService {
     return Promise.all(rows.map((row) => this.toInstalledPlugin(row)));
   }
 
+  /**
+   * Manifests of the installed copies of enabled plugins. Used by features that read what plugins declare, such as
+   * dashboard widgets. A plugin whose installed manifest can no longer be read is left out.
+   */
+  public async getEnabledPluginManifests() {
+    const rows = (await this.repository.getPlugins()).filter((row) => row.enabled);
+    const manifests = await Promise.all(rows.map((row) => this.marketplace.getInstalledPluginInfo(row.urn as AppUrn).catch(() => null)));
+
+    return manifests.filter((manifest): manifest is PluginManifest => manifest !== null);
+  }
+
   public async getInstalledPlugin(urn: AppUrn) {
     return this.toInstalledPlugin(await this.getInstalledOrThrow(urn));
   }

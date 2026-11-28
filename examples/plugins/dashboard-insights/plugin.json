@@ -1,0 +1,30 @@
+{
+  "id": "dashboard-insights",
+  "name": "Dashboard insights",
+  "version": "1.0.0",
+  "tipi_version": 1,
+  "min_tipi_version": "4.1.0",
+  "short_desc": "Backup status and per-app resource usage on the dashboard",
+  "description": "Adds a backup status widget and a per-app resource usage widget to the dashboard.",
+  "author": "runtipi",
+  "source": "https://github.com/runtipi/runtipi/tree/develop/examples/plugins/dashboard-insights",
+  "capabilities": ["dashboard-widget"],
+  "widgets": [
+    {
+      "id": "backup-status",
+      "title": "Backup status",
+      "type": "list",
+      "source": "app-backups",
+      "refresh_seconds": 60,
+      "options": { "limit": 8 }
+    },
+    {
+      "id": "app-resources",
+      "title": "Per-app resource usage",
+      "type": "list",
+      "source": "app-resources",
+      "refresh_seconds": 15,
+      "options": { "metric": "memory", "limit": 8 }
+    }
+  ]
+}

@@ -2795,6 +2795,89 @@
         ]
       }
     },
+    "/api/dashboard/widgets": {
+      "get": {
+        "operationId": "getDashboardWidgets",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardWidgetsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "DashboardWidgets"
+        ]
+      }
+    },
+    "/api/dashboard/widgets/data": {
+      "get": {
+        "operationId": "getDashboardWidgetData",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardWidgetDataDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "DashboardWidgets"
+        ]
+      }
+    },
+    "/api/dashboard/widgets/preferences": {
+      "put": {
+        "operationId": "setDashboardWidgetPreferences",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardWidgetPreferencesBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardWidgetsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "DashboardWidgets"
+        ]
+      }
+    },
     "/api/debug/seed": {
       "post": {
         "operationId": "seedDatabase",
@@ -6660,6 +6743,10 @@
                   "type": "string",
                   "minLength": 1
                 },
+                "widgets": {
+                  "type": "array",
+                  "items": {}
+                },
                 "min_tipi_version": {
                   "type": "string"
                 },
@@ -6682,7 +6769,8 @@
                 "source",
                 "tipi_version",
                 "urn",
-                "version"
+                "version",
+                "widgets"
               ]
             }
           },
@@ -6992,6 +7080,10 @@
                 "type": "string",
                 "minLength": 1
               },
+              "widgets": {
+                "type": "array",
+                "items": {}
+              },
               "min_tipi_version": {
                 "type": "string"
               },
@@ -7012,7 +7104,8 @@
               "source",
               "tipi_version",
               "urn",
-              "version"
+              "version",
+              "widgets"
             ],
             "additionalProperties": false
           },
@@ -7293,6 +7386,10 @@
                             "type": "string",
                             "minLength": 1
                           },
+                          "widgets": {
+                            "type": "array",
+                            "items": {}
+                          },
                           "min_tipi_version": {
                             "type": "string"
                           },
@@ -7313,7 +7410,8 @@
                           "source",
                           "tipi_version",
                           "urn",
-                          "version"
+                          "version",
+                          "widgets"
                         ],
                         "additionalProperties": false
                       },
@@ -7677,6 +7775,10 @@
                           "type": "string",
                           "minLength": 1
                         },
+                        "widgets": {
+                          "type": "array",
+                          "items": {}
+                        },
                         "min_tipi_version": {
                           "type": "string"
                         },
@@ -7697,7 +7799,8 @@
                         "source",
                         "tipi_version",
                         "urn",
-                        "version"
+                        "version",
+                        "widgets"
                       ],
                       "additionalProperties": false
                     },
@@ -8046,6 +8149,10 @@
                     "type": "string",
                     "minLength": 1
                   },
+                  "widgets": {
+                    "type": "array",
+                    "items": {}
+                  },
                   "min_tipi_version": {
                     "type": "string"
                   },
@@ -8066,7 +8173,8 @@
                   "source",
                   "tipi_version",
                   "urn",
-                  "version"
+                  "version",
+                  "widgets"
                 ],
                 "additionalProperties": false
               },
@@ -8209,6 +8317,464 @@
         },
         "required": [
           "globalConfig"
+        ]
+      },
+      "DashboardWidgetsDto": {
+        "type": "object",
+        "properties": {
+          "widgets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hidden": {
+                  "type": "boolean"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "pluginName": {
+                  "type": "string"
+                },
+                "pluginUrn": {
+                  "type": "string"
+                },
+                "refreshSeconds": {
+                  "type": "number"
+                },
+                "source": {
+                  "enum": [
+                    "app-backups",
+                    "app-resources",
+                    "app-storage"
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "type": {
+                  "enum": [
+                    "list",
+                    "progress",
+                    "stat",
+                    "timeseries"
+                  ]
+                },
+                "widgetId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "hidden",
+                "key",
+                "pluginName",
+                "pluginUrn",
+                "refreshSeconds",
+                "source",
+                "title",
+                "type",
+                "widgetId"
+              ]
+            }
+          }
+        },
+        "required": [
+          "widgets"
+        ]
+      },
+      "DashboardWidgetDataDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "columns": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "apps",
+                        "backup_count",
+                        "backup_size",
+                        "cpu",
+                        "failures",
+                        "growth",
+                        "last_backup",
+                        "memory",
+                        "size"
+                      ]
+                    }
+                  },
+                  "hiddenRows": {
+                    "type": "number"
+                  },
+                  "rows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "share": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "const": "error"
+                            },
+                            {
+                              "const": "none"
+                            },
+                            {
+                              "const": "ok"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "urn": {
+                          "type": "string"
+                        },
+                        "values": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "apps",
+                                  "backup_count",
+                                  "backup_size",
+                                  "cpu",
+                                  "failures",
+                                  "growth",
+                                  "last_backup",
+                                  "memory",
+                                  "size"
+                                ]
+                              },
+                              "value": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "value"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "error",
+                        "name",
+                        "share",
+                        "status",
+                        "urn",
+                        "values"
+                      ]
+                    }
+                  },
+                  "type": {
+                    "const": "list"
+                  }
+                },
+                "required": [
+                  "columns",
+                  "hiddenRows",
+                  "rows",
+                  "type"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "apps",
+                      "backup_count",
+                      "backup_size",
+                      "cpu",
+                      "failures",
+                      "growth",
+                      "last_backup",
+                      "memory",
+                      "size"
+                    ]
+                  },
+                  "points": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "t": {
+                          "type": "number"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "t",
+                        "value"
+                      ]
+                    }
+                  },
+                  "type": {
+                    "const": "timeseries"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "points",
+                  "type"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "percent": {
+                    "type": "number"
+                  },
+                  "total": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "apps",
+                              "backup_count",
+                              "backup_size",
+                              "cpu",
+                              "failures",
+                              "growth",
+                              "last_backup",
+                              "memory",
+                              "size"
+                            ]
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": {
+                    "const": "progress"
+                  },
+                  "value": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "apps",
+                          "backup_count",
+                          "backup_size",
+                          "cpu",
+                          "failures",
+                          "growth",
+                          "last_backup",
+                          "memory",
+                          "size"
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value"
+                    ]
+                  }
+                },
+                "required": [
+                  "percent",
+                  "total",
+                  "type",
+                  "value"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "secondary": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "apps",
+                              "backup_count",
+                              "backup_size",
+                              "cpu",
+                              "failures",
+                              "growth",
+                              "last_backup",
+                              "memory",
+                              "size"
+                            ]
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": {
+                    "const": "stat"
+                  },
+                  "value": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "apps",
+                          "backup_count",
+                          "backup_size",
+                          "cpu",
+                          "failures",
+                          "growth",
+                          "last_backup",
+                          "memory",
+                          "size"
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value"
+                    ]
+                  }
+                },
+                "required": [
+                  "secondary",
+                  "type",
+                  "value"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "key": {
+            "type": "string"
+          },
+          "sampledAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "pending"
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "key",
+          "sampledAt",
+          "status"
+        ]
+      },
+      "DashboardWidgetPreferencesBodyDto": {
+        "type": "object",
+        "properties": {
+          "hidden": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "hidden"
         ]
       }
     }

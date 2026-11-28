@@ -847,6 +847,7 @@ export type SearchPluginsDto = {
         tipi_version: number;
         urn: string;
         version: string;
+        widgets: Array<unknown>;
         min_tipi_version?: string;
         website?: string;
     }>;
@@ -911,6 +912,7 @@ export type PluginDetailsDto = {
         tipi_version: number;
         urn: string;
         version: string;
+        widgets: Array<unknown>;
         min_tipi_version?: string;
         website?: string;
     };
@@ -972,6 +974,7 @@ export type PluginDetailsDto = {
             tipi_version: number;
             urn: string;
             version: string;
+            widgets: Array<unknown>;
             min_tipi_version?: string;
             website?: string;
         } | null;
@@ -1047,6 +1050,7 @@ export type InstalledPluginsDto = {
             tipi_version: number;
             urn: string;
             version: string;
+            widgets: Array<unknown>;
             min_tipi_version?: string;
             website?: string;
         } | null;
@@ -1120,6 +1124,7 @@ export type InstalledPluginDto = {
         tipi_version: number;
         urn: string;
         version: string;
+        widgets: Array<unknown>;
         min_tipi_version?: string;
         website?: string;
     } | null;
@@ -1154,6 +1159,74 @@ export type UpdatePluginConfigBodyDto = {
     globalConfig: {
         [key: string]: number | string | boolean;
     };
+};
+
+export type DashboardWidgetsDto = {
+    widgets: Array<{
+        hidden: boolean;
+        key: string;
+        pluginName: string;
+        pluginUrn: string;
+        refreshSeconds: number;
+        source: 'app-backups' | 'app-resources' | 'app-storage';
+        title: string;
+        type: 'list' | 'progress' | 'stat' | 'timeseries';
+        widgetId: string;
+    }>;
+};
+
+export type DashboardWidgetDataDto = {
+    data: {
+        columns: Array<'apps' | 'backup_count' | 'backup_size' | 'cpu' | 'failures' | 'growth' | 'last_backup' | 'memory' | 'size'>;
+        hiddenRows: number;
+        rows: Array<{
+            error: string | null;
+            name: string;
+            share: number | null;
+            status: 'error' | 'none' | 'ok' | null;
+            urn: string;
+            values: Array<{
+                kind: 'apps' | 'backup_count' | 'backup_size' | 'cpu' | 'failures' | 'growth' | 'last_backup' | 'memory' | 'size';
+                value: number | null;
+            }>;
+        }>;
+        type: 'list';
+    } | {
+        kind: 'apps' | 'backup_count' | 'backup_size' | 'cpu' | 'failures' | 'growth' | 'last_backup' | 'memory' | 'size';
+        points: Array<{
+            t: number;
+            value: number;
+        }>;
+        type: 'timeseries';
+    } | {
+        percent: number;
+        total: {
+            kind: 'apps' | 'backup_count' | 'backup_size' | 'cpu' | 'failures' | 'growth' | 'last_backup' | 'memory' | 'size';
+            value: number | null;
+        } | null;
+        type: 'progress';
+        value: {
+            kind: 'apps' | 'backup_count' | 'backup_size' | 'cpu' | 'failures' | 'growth' | 'last_backup' | 'memory' | 'size';
+            value: number | null;
+        };
+    } | {
+        secondary: {
+            kind: 'apps' | 'backup_count' | 'backup_size' | 'cpu' | 'failures' | 'growth' | 'last_backup' | 'memory' | 'size';
+            value: number | null;
+        } | null;
+        type: 'stat';
+        value: {
+            kind: 'apps' | 'backup_count' | 'backup_size' | 'cpu' | 'failures' | 'growth' | 'last_backup' | 'memory' | 'size';
+            value: number | null;
+        };
+    } | null;
+    key: string;
+    sampledAt: number | null;
+    status: 'ok' | 'pending';
+};
+
+export type DashboardWidgetPreferencesBodyDto = {
+    hidden: Array<string>;
 };
 
 export type UserContextData = {
@@ -2445,6 +2518,47 @@ export type UpdateGlobalConfigResponses = {
 };
 
 export type UpdateGlobalConfigResponse = UpdateGlobalConfigResponses[keyof UpdateGlobalConfigResponses];
+
+export type GetDashboardWidgetsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/dashboard/widgets';
+};
+
+export type GetDashboardWidgetsResponses = {
+    default: DashboardWidgetsDto;
+};
+
+export type GetDashboardWidgetsResponse = GetDashboardWidgetsResponses[keyof GetDashboardWidgetsResponses];
+
+export type GetDashboardWidgetDataData = {
+    body?: never;
+    path?: never;
+    query: {
+        key: string;
+    };
+    url: '/api/dashboard/widgets/data';
+};
+
+export type GetDashboardWidgetDataResponses = {
+    default: DashboardWidgetDataDto;
+};
+
+export type GetDashboardWidgetDataResponse = GetDashboardWidgetDataResponses[keyof GetDashboardWidgetDataResponses];
+
+export type SetDashboardWidgetPreferencesData = {
+    body: DashboardWidgetPreferencesBodyDto;
+    path?: never;
+    query?: never;
+    url: '/api/dashboard/widgets/preferences';
+};
+
+export type SetDashboardWidgetPreferencesResponses = {
+    default: DashboardWidgetsDto;
+};
+
+export type SetDashboardWidgetPreferencesResponse = SetDashboardWidgetPreferencesResponses[keyof SetDashboardWidgetPreferencesResponses];
 
 export type SeedDatabaseData = {
     body?: never;

@@ -33,6 +33,7 @@ export const createPluginInfo = (overrides: Partial<PluginInfo> = {}): PluginInf
   deprecated: false,
   capabilities: ['compose', 'dashboard-widget'],
   settings: { global: [], per_app: [] },
+  widgets: [],
   ...overrides,
 });
 

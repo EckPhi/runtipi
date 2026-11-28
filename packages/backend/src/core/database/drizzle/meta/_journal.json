@@ -253,6 +253,13 @@
       "when": 1795778321990,
       "tag": "0035_plugins",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1795842398407,
+      "tag": "0036_dashboard_widgets",
+      "breakpoints": true
     }
   ]
 }

@@ -61,3 +61,56 @@ describe('pluginManifestSchema', () => {
     expect(pluginManifestSchema(manifest)).toBeInstanceOf(type.errors);
   });
 });
+
+describe('pluginManifestSchema widgets', () => {
+  const widgetManifest = { ...validManifest, capabilities: ['dashboard-widget'] };
+
+  it('defaults to no widgets', () => {
+    const result = pluginManifestSchema(validManifest);
+
+    if (result instanceof type.errors) throw new Error(result.summary);
+    expect(result.widgets).toEqual([]);
+  });
+
+  it('accepts widgets bound to a data source and applies option defaults', () => {
+    const result = pluginManifestSchema({
+      ...widgetManifest,
+      widgets: [
+        { id: 'backup-status', title: 'Backup status', type: 'list', source: 'app-backups' },
+        {
+          id: 'resources',
+          title: 'Resource usage',
+          type: 'list',
+          source: 'app-resources',
+          refresh_seconds: 30,
+          options: { metric: 'cpu', limit: 5 },
+        },
+        { id: 'storage', title: 'Storage growth', type: 'timeseries', source: 'app-storage', options: { period: '30d' } },
+      ],
+    });
+
+    if (result instanceof type.errors) throw new Error(result.summary);
+    expect(result.widgets[0]?.options).toEqual({ limit: 10 });
+    expect(result.widgets[1]?.options).toEqual({ metric: 'cpu', limit: 5 });
+    expect(result.widgets[2]?.options).toEqual({ period: '30d', limit: 10 });
+  });
+
+  const widget = { id: 'w', title: 'Widget', type: 'list', source: 'app-backups' };
+
+  it.each([
+    ['widgets without the dashboard-widget capability', { capabilities: ['compose'], widgets: [widget] }],
+    ['duplicate widget ids', { widgets: [widget, widget] }],
+    ['an unknown widget type', { widgets: [{ ...widget, type: 'chart' }] }],
+    ['an unknown data source', { widgets: [{ ...widget, source: 'plugin-container' }] }],
+    ['a type the source cannot produce', { widgets: [{ ...widget, type: 'timeseries' }] }],
+    ['a metric on a source other than app-resources', { widgets: [{ ...widget, options: { metric: 'cpu' } }] }],
+    ['a period on a source other than app-storage', { widgets: [{ ...widget, options: { period: '7d' } }] }],
+    ['an unknown widget key', { widgets: [{ ...widget, script: 'index.js' }] }],
+    ['an unknown option', { widgets: [{ ...widget, options: { query: 'select 1' } }] }],
+    ['a list limit above 50', { widgets: [{ ...widget, options: { limit: 51 } }] }],
+    ['a refresh interval below 5 seconds', { widgets: [{ ...widget, refresh_seconds: 1 }] }],
+    ['an invalid widget id', { widgets: [{ ...widget, id: 'My Widget' }] }],
+  ])('rejects %s', (_, override) => {
+    expect(pluginManifestSchema({ ...widgetManifest, ...override })).toBeInstanceOf(type.errors);
+  });
+});

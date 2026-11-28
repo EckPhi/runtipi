@@ -1,1 +1,10 @@
-export { DropdownMenu, DropdownMenuItem, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuContent, DropdownMenuTrigger } from './DropdownMenu';
+export {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './DropdownMenu';

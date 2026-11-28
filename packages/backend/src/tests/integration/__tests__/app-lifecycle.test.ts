@@ -52,11 +52,15 @@ import { StatusManagerService } from '@/modules/app-lifecycle/services/status-ma
 import { AppValidationService } from '@/modules/app-lifecycle/services/app-validation.service';
 import { AppMigrationService } from '@/modules/app-lifecycle/services/app-migration.service';
 import type { DynamicComposeSchemaYaml } from '@runtipi/common/schemas';
+import type { AppUrn } from '@runtipi/common/types';
 import { BackupAppHandler } from '@/modules/app-lifecycle/handlers/backup-app.handler';
 import { RestoreAppHandler } from '@/modules/app-lifecycle/handlers/restore-app.handler';
 import { AppOperationsService } from '@/modules/app-lifecycle/services/app-operations.service';
 import { ReposHelpers } from '@/modules/app-stores/repos.helpers';
 import { AppJobService } from '@/modules/app-lifecycle/services/app-job.service';
+import { PluginsRepository } from '@/modules/plugins/plugins.repository';
+import { PluginsService } from '@/modules/plugins/plugins.service';
+import { createPluginInStore } from '../../utils/create-plugin-in-store';
 
 // memfs has no /proc filesystem; native Linux coverage uses real files in separate suites.
 mockPlatform('darwin');
@@ -83,6 +87,7 @@ describe('App lifecycle', () => {
   let appFilesManager: AppFilesManager;
   let backupManager: BackupManager;
   let appJobService: AppJobService;
+  let pluginsService: PluginsService;
   const configurationService = mock<ConfigurationService>();
   let databaseService = mock<DatabaseService>();
   const dockerService = mock<DockerService>();
@@ -150,6 +155,8 @@ describe('App lifecycle', () => {
         AppMigrationService,
         BackupAppHandler,
         RestoreAppHandler,
+        PluginsService,
+        PluginsRepository,
         {
           provide: APP_ASYNC_MUTEX,
           useValue: new AsyncMutex(),
@@ -203,6 +210,7 @@ describe('App lifecycle', () => {
     appFilesManager = moduleRef.get(AppFilesManager);
     backupManager = moduleRef.get(BackupManager);
     appJobService = moduleRef.get(AppJobService);
+    pluginsService = moduleRef.get(PluginsService);
 
     moduleRef.get(ReposHelpers).pullRepo = async () => ({ success: true, message: 'Pulled fixture repository' });
     databaseService.db = db;
@@ -928,6 +936,66 @@ describe('App lifecycle', () => {
 
       const app = await appsRepository.getAppByUrn(appInfo.urn);
       expect(app?.pendingRestart).toBe(true);
+    });
+  });
+
+  describe('plugin app settings', () => {
+    const TAILSCALE = 'tailscale:test' as AppUrn;
+
+    const installTailscale = async () => {
+      await createPluginInStore('test', {
+        id: 'tailscale',
+        name: 'Tailscale',
+        settings: {
+          global: [{ type: 'text', label: 'Network', env_variable: 'NETWORK_NAME', default: 'tailscale' }],
+          per_app: [{ type: 'boolean', label: 'Enabled', env_variable: 'ENABLED', default: false }],
+        },
+        app_settings: { compose_patches: [{ op: 'add_network', when: 'ENABLED', network: '{{plugin.NETWORK_NAME}}' }] },
+      });
+      await pluginsService.installPlugin(TAILSCALE);
+    };
+
+    const generatedCompose = async (urn: Parameters<typeof appFilesManager.getGeneratedDockerComposeYaml>[0]) =>
+      yaml.parse((await appFilesManager.getGeneratedDockerComposeYaml(urn)).content ?? '');
+
+    it('attaches the app to the plugin network after a restart and detaches it once the plugin is removed', async () => {
+      const appInfo = await createAppInStore('test', { id: 'tailscale-app' });
+      await installTailscale();
+
+      await appLifecycleService.installApp({ appUrn: appInfo.urn, form: {} });
+      await waitFor(async () => expect((await appsRepository.getAppByUrn(appInfo.urn))?.status).toBe('running'));
+      const before = await generatedCompose(appInfo.urn);
+      expect(before.networks).not.toHaveProperty('plugin_tailscale');
+
+      const app = await appsRepository.getAppByUrn(appInfo.urn);
+      await appLifecycleService.updateAppSettings({ appUrn: appInfo.urn, form: { ...app?.config, plugins: { [TAILSCALE]: { ENABLED: true } } } });
+
+      const updated = await appsRepository.getAppByUrn(appInfo.urn);
+      expect(updated?.pendingRestart).toBe(true);
+      expect(updated?.config.plugins).toEqual({ [TAILSCALE]: { ENABLED: true } });
+
+      await appLifecycleService.restartApp({ appUrn: appInfo.urn });
+      await waitFor(async () => expect((await appsRepository.getAppByUrn(appInfo.urn))?.pendingRestart).toBe(false));
+
+      const after = await generatedCompose(appInfo.urn);
+      expect(after.networks.plugin_tailscale).toEqual({ name: 'tailscale', external: true });
+      expect(after.services[appInfo.id].networks).toEqual({ ...before.services[appInfo.id].networks, plugin_tailscale: {} });
+
+      await pluginsService.removePlugin(TAILSCALE);
+      await appLifecycleService.restartApp({ appUrn: appInfo.urn });
+      await waitFor(async () => expect((await generatedCompose(appInfo.urn)).networks).not.toHaveProperty('plugin_tailscale'));
+      expect((await appsRepository.getAppByUrn(appInfo.urn))?.config.plugins).toEqual({ [TAILSCALE]: { ENABLED: true } });
+    });
+
+    it('rejects invalid plugin settings', async () => {
+      const appInfo = await createAppInStore('test', { id: 'tailscale-invalid' });
+      await installTailscale();
+      await appLifecycleService.installApp({ appUrn: appInfo.urn, form: {} });
+      await waitFor(async () => expect((await appsRepository.getAppByUrn(appInfo.urn))?.status).toBe('running'));
+
+      await expect(
+        appLifecycleService.updateAppSettings({ appUrn: appInfo.urn, form: { plugins: { [TAILSCALE]: { ENABLED: 'yes' } } } }),
+      ).rejects.toMatchObject({ response: { message: 'PLUGIN_ERROR_INVALID_CONFIG' } });
     });
   });
 });

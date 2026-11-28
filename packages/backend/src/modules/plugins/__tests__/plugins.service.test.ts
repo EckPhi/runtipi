@@ -10,6 +10,7 @@ import { MarketplaceService } from '@/modules/marketplace/marketplace.service';
 import { createMockAppStore } from '@/tests/helpers/app-mocks';
 import { createPluginInStore } from '@/tests/utils/create-plugin-in-store';
 import { AsyncMutex } from '@/utils/mutex/async-mutex';
+import type { PluginManifestInput } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
 import { fromPartial } from '@total-typescript/shoehorn';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -415,6 +416,129 @@ describe('PluginsService', () => {
 
       await expect(service.updateGlobalConfig(URN, { ENDPOINT: '' })).rejects.toMatchObject({ response: { message: 'PLUGIN_ERROR_INVALID_CONFIG' } });
       expect(repository.rows.get(URN)?.globalConfig).toEqual({ ENDPOINT: 'x', RETENTION: 3 });
+    });
+  });
+
+  describe('per-app settings', () => {
+    const TAILSCALE = 'tailscale:store' as AppUrn;
+    const compose = {
+      services: {
+        web: { image: 'nginx', 'x-runtipi': { is_main: true, internal_port: 80 } },
+        sidecar: { image: 'busybox', network_mode: 'service:web' },
+      },
+    };
+
+    const installTailscale = async (overrides: Partial<PluginManifestInput> = {}) => {
+      await createPluginInStore('store', {
+        id: 'tailscale',
+        name: 'Tailscale',
+        settings: {
+          global: [{ type: 'text', label: 'Network', env_variable: 'NETWORK_NAME', default: 'tailscale' }],
+          per_app: [
+            { type: 'boolean', label: 'Enabled', env_variable: 'ENABLED', default: false },
+            { type: 'text', label: 'Hostname', env_variable: 'HOSTNAME', visible_when: 'ENABLED', required: true, regex: '^[a-z0-9-]+$' },
+          ],
+        },
+        app_settings: {
+          compose_patches: [{ op: 'add_network', when: 'ENABLED', network: '{{plugin.NETWORK_NAME}}', aliases: ['{{app.HOSTNAME}}'] }],
+        },
+        ...overrides,
+      });
+      const context = await setup();
+      await context.service.installPlugin(TAILSCALE);
+      return context;
+    };
+
+    it('lists the section of an installed plugin with the services it applies to', async () => {
+      const { service } = await installTailscale();
+
+      expect(await service.getAppPluginSections(compose)).toEqual([
+        expect.objectContaining({ urn: TAILSCALE, title: 'Tailscale', description: '', applicableServices: ['web'] }),
+      ]);
+    });
+
+    it('hides the section when no service applies, the plugin is disabled or has no app settings', async () => {
+      const { service } = await installTailscale();
+
+      expect(await service.getAppPluginSections({ services: { vpn: compose.services.sidecar } })).toEqual([]);
+
+      await service.setPluginEnabled(TAILSCALE, false);
+      expect(await service.getAppPluginSections(compose)).toEqual([]);
+
+      await service.installPlugin(URN, { ENDPOINT: 'https://s3.example.com' });
+      await service.setPluginEnabled(TAILSCALE, true);
+      expect((await service.getAppPluginSections(compose)).map((section) => section.urn)).toEqual([TAILSCALE]);
+    });
+
+    it('validates values against the declared fields and drops values of hidden fields', async () => {
+      const { service } = await installTailscale();
+
+      expect(await service.resolveAppPluginConfig({ [TAILSCALE]: { ENABLED: true, HOSTNAME: 'web' } }, undefined)).toEqual({
+        [TAILSCALE]: { ENABLED: true, HOSTNAME: 'web' },
+      });
+      expect(await service.resolveAppPluginConfig({ [TAILSCALE]: { ENABLED: false, HOSTNAME: 'Not valid!' } }, undefined)).toEqual({
+        [TAILSCALE]: { ENABLED: false },
+      });
+      expect(await service.resolveAppPluginConfig({ [TAILSCALE]: {} }, undefined)).toEqual({ [TAILSCALE]: { ENABLED: false } });
+    });
+
+    it.each([
+      ['a missing required field', { ENABLED: true }, 'Hostname is required'],
+      ['an invalid value', { ENABLED: true, HOSTNAME: 'Not valid!' }, 'Hostname must match'],
+      ['an unknown setting', { ENABLED: true, HOSTNAME: 'web', EXTRA: 1 }, 'unknown setting EXTRA'],
+      ['a value of the wrong type', { ENABLED: 'yes' }, 'Enabled must be a boolean'],
+    ])('rejects %s', async (_, values, reason) => {
+      const { service } = await installTailscale();
+
+      await expect(service.resolveAppPluginConfig({ [TAILSCALE]: values }, undefined)).rejects.toMatchObject({
+        response: { message: 'PLUGIN_ERROR_INVALID_CONFIG', intlParams: { id: TAILSCALE, reason: expect.stringContaining(reason) } },
+      });
+    });
+
+    it('rejects plugin settings that are not an object of values', async () => {
+      const { service } = await installTailscale();
+
+      await expect(service.resolveAppPluginConfig({ [TAILSCALE]: { ENABLED: { nested: true } } }, undefined)).rejects.toMatchObject({
+        response: { message: 'SYSTEM_ERROR_INVALID_BODY' },
+      });
+      await expect(service.resolveAppPluginConfig('nope', undefined)).rejects.toMatchObject({ response: { message: 'SYSTEM_ERROR_INVALID_BODY' } });
+    });
+
+    it('keeps stored values of plugins that are not installed and ignores submitted ones', async () => {
+      const { service } = await installTailscale();
+      const stored = { 'gone:store': { ENABLED: true }, [TAILSCALE]: { ENABLED: true, HOSTNAME: 'old' } };
+
+      expect(await service.resolveAppPluginConfig({ 'gone:store': { ENABLED: false }, 'never:store': { A: 1 } }, stored)).toEqual({
+        'gone:store': { ENABLED: true },
+      });
+      expect(await service.resolveAppPluginConfig(undefined, undefined)).toBeUndefined();
+    });
+
+    it('keeps the stored values of a plugin through an uninstall', async () => {
+      const { service } = await installTailscale();
+      const stored = await service.resolveAppPluginConfig({ [TAILSCALE]: { ENABLED: true, HOSTNAME: 'web' } }, undefined);
+
+      await service.removePlugin(TAILSCALE);
+
+      expect(await service.resolveAppPluginConfig({}, stored)).toEqual(stored);
+      expect(await service.getComposePlugins({ plugins: stored })).toEqual([]);
+    });
+
+    it('returns the compose patches of the plugins configured for an app', async () => {
+      const { service } = await installTailscale();
+
+      expect(await service.getComposePlugins({ openPort: true })).toEqual([]);
+      expect(await service.getComposePlugins({ plugins: { [TAILSCALE]: { ENABLED: true, HOSTNAME: 'web' } } })).toEqual([
+        {
+          urn: TAILSCALE,
+          globalConfig: { NETWORK_NAME: 'tailscale' },
+          appConfig: { ENABLED: true, HOSTNAME: 'web' },
+          appSettings: expect.objectContaining({ compose_patches: [expect.objectContaining({ op: 'add_network' })] }),
+        },
+      ]);
+
+      await service.setPluginEnabled(TAILSCALE, false);
+      expect(await service.getComposePlugins({ plugins: { [TAILSCALE]: { ENABLED: true } } })).toEqual([]);
     });
   });
 });

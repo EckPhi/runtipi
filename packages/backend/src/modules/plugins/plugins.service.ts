@@ -7,14 +7,28 @@ import { LoggerService } from '@/core/logger/logger.service';
 import type { AsyncMutex } from '@/utils/mutex/async-mutex';
 import { APP_ASYNC_MUTEX } from '@/utils/mutex/mutex.module';
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import type { PluginCapability, PluginManifest } from '@runtipi/common/schemas';
+import type { DynamicComposeSchemaYaml, PluginAppSettings, PluginCapability, PluginManifest } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
+import { type } from 'arktype';
+import { type ComposePlugin, getApplicableServices } from '../docker/builders/plugin-patches';
 import { MarketplaceService } from '../marketplace/marketplace.service';
-import { type PluginConfig, validatePluginConfig } from './plugin-config.helpers';
+import { type PluginConfig, validateAppPluginConfig, validatePluginConfig } from './plugin-config.helpers';
 import { PluginsRepository } from './plugins.repository';
 
 export type PluginIncompatibilityReason = 'min_tipi_version' | 'unavailable' | 'deprecated';
 export type PluginCompatibility = { compatible: boolean; minTipiVersion: string | null; reason: PluginIncompatibilityReason | null };
+
+/** Per-app plugin settings, stored in `app.config.plugins` and keyed by plugin urn. */
+export type AppPluginsConfig = Record<string, PluginConfig>;
+
+const appPluginsConfigSchema = type({ '[string]': type({ '[string]': 'string | number | boolean' }) });
+
+const parseAppPluginsConfig = (value: unknown) => {
+  const parsed = appPluginsConfigSchema(value ?? {});
+  return parsed instanceof type.errors ? null : (parsed as AppPluginsConfig);
+};
+
+type AppSectionPlugin = { row: Plugin; manifest: PluginManifest & { app_settings: PluginAppSettings } };
 
 @Injectable()
 export class PluginsService {
@@ -335,6 +349,106 @@ export class PluginsService {
 
       const config = this.validateGlobalConfig(urn, manifest, { ...installed.globalConfig, ...input });
       return this.repository.updatePlugin(urn, { globalConfig: config });
+    });
+  }
+
+  /**
+   * Installed and enabled plugins that add a section to the settings of apps.
+   * Disabled and uninstalled plugins are left out: their section is hidden and their patches stop applying.
+   */
+  private async getAppSectionPlugins(): Promise<AppSectionPlugin[]> {
+    const rows = (await this.repository.getPlugins()).filter((row) => row.enabled);
+
+    const plugins = await Promise.all(
+      rows.map(async (row) => {
+        const manifest = await this.marketplace.getInstalledPluginInfo(row.urn as AppUrn).catch(() => null);
+        if (!manifest?.app_settings || !manifest.capabilities.includes('compose')) return null;
+        return { row, manifest } as AppSectionPlugin;
+      }),
+    );
+
+    return plugins.filter((plugin) => plugin !== null);
+  }
+
+  /**
+   * The plugin sections to show in the settings of an app, with the services each one applies to.
+   * @param compose - the source Compose file of the app, used for the applicability filter
+   */
+  public async getAppPluginSections(compose: Pick<DynamicComposeSchemaYaml, 'services'> | null) {
+    if (!compose) return [];
+
+    const plugins = await this.getAppSectionPlugins();
+
+    return plugins
+      .map(({ row, manifest }) => ({
+        urn: row.urn,
+        name: manifest.name,
+        title: manifest.app_settings.title ?? manifest.name,
+        description: manifest.app_settings.description,
+        fields: manifest.settings.per_app,
+        applicableServices: getApplicableServices(compose, manifest.app_settings.applies_to),
+      }))
+      .filter((section) => section.fields.length > 0 && section.applicableServices.length > 0);
+  }
+
+  /**
+   * Validate the per-app plugin settings submitted with an app form.
+   *
+   * Values of installed plugins are checked against the fields they declare. Values of plugins that are not installed
+   * (or disabled) are not editable: what is stored is kept, so reinstalling a plugin brings its settings back, and
+   * anything else submitted for them is ignored.
+   *
+   * @returns the value to store in `app.config.plugins`, or `undefined` when there is nothing to store
+   */
+  public async resolveAppPluginConfig(input: unknown, stored: unknown): Promise<AppPluginsConfig | undefined> {
+    const submitted = parseAppPluginsConfig(input);
+
+    if (!submitted) {
+      throw new TranslatableError('SYSTEM_ERROR_INVALID_BODY', undefined, HttpStatus.BAD_REQUEST);
+    }
+
+    const previous = parseAppPluginsConfig(stored) ?? {};
+    const plugins = new Map((await this.getAppSectionPlugins()).map((plugin) => [plugin.row.urn, plugin]));
+    const result: AppPluginsConfig = {};
+
+    for (const [urn, values] of Object.entries(previous)) {
+      if (!plugins.has(urn)) result[urn] = values;
+    }
+
+    for (const [urn, values] of Object.entries(submitted)) {
+      const plugin = plugins.get(urn);
+
+      if (!plugin) {
+        this.logger.debug(`Ignoring settings for plugin ${urn}, it is not installed or not enabled`);
+        continue;
+      }
+
+      const validated = validateAppPluginConfig(plugin.manifest.settings.per_app, values);
+
+      if (!validated.success) {
+        throw new TranslatableError('PLUGIN_ERROR_INVALID_CONFIG', { id: urn, reason: validated.reason }, HttpStatus.BAD_REQUEST);
+      }
+
+      result[urn] = validated.config;
+    }
+
+    return Object.keys(result).length > 0 ? result : undefined;
+  }
+
+  /**
+   * The plugins whose Compose patches apply to an app, given its stored config.
+   */
+  public async getComposePlugins(appConfig: Record<string, unknown> | null | undefined): Promise<ComposePlugin[]> {
+    const stored = parseAppPluginsConfig(appConfig?.plugins);
+    if (!stored || Object.keys(stored).length === 0) return [];
+
+    const plugins = await this.getAppSectionPlugins();
+
+    return plugins.flatMap(({ row, manifest }) => {
+      const config = stored[row.urn];
+      if (!config) return [];
+
+      return [{ urn: row.urn, appSettings: manifest.app_settings, globalConfig: row.globalConfig, appConfig: config }];
     });
   }
 }

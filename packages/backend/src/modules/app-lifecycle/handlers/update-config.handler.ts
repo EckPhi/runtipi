@@ -31,7 +31,7 @@ export class UpdateConfigHandler implements ILifecycleHandler<UpdateConfigParams
     const appInfo = await this.appFilesManager.getInstalledAppInfo(appUrn);
     if (!appInfo) throw new TranslatableError('APP_ERROR_APP_NOT_FOUND', { id: appUrn }, HttpStatus.NOT_FOUND);
 
-    const form = await this.validationService.validateUpdateConfigSettings(appUrn, appInfo, params?.form ?? {}, app.id);
+    const form = await this.validationService.validateUpdateConfigSettings(appUrn, appInfo, params?.form ?? {}, app.id, app.config);
 
     const requestId = generateRequestId();
 

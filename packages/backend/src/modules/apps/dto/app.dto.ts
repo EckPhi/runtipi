@@ -1,5 +1,6 @@
 import { APP_STATUS } from '@/core/database/drizzle/types';
 import { AppInfoDto, MetadataDto } from '@/modules/marketplace/dto/marketplace.dto';
+import { pluginAppFieldSchema } from '@runtipi/common/schemas';
 import { type } from 'arktype';
 import { createArkDto } from 'nestjs-arktype';
 
@@ -41,10 +42,20 @@ const guestAppsSchema = type({
   }).array(),
 });
 
+const appPluginSectionSchema = type({
+  urn: 'string',
+  name: 'string',
+  title: 'string',
+  description: 'string',
+  fields: pluginAppFieldSchema.array(),
+  applicableServices: 'string[]',
+});
+
 const getAppSchema = type({
   app: appSchema.or('null').optional(),
   info: AppInfoDto.schema,
   metadata: MetadataDto.schema,
+  pluginSections: appPluginSectionSchema.array(),
 });
 
 const getRandomPortSchema = type({

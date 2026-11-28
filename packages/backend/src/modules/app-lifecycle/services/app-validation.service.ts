@@ -8,6 +8,7 @@ import type { AppInfo } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
 import validator from 'validator';
 import { AppsRepository } from '../../apps/apps.repository';
+import { PluginsService } from '../../plugins/plugins.service';
 import { appFormSchema } from '../dto/app-lifecycle.dto';
 
 type ParsedForm = typeof appFormSchema.infer;
@@ -18,7 +19,21 @@ export class AppValidationService {
     private readonly appRepository: AppsRepository,
     private readonly config: ConfigurationService,
     private readonly logger: LoggerService,
+    private readonly plugins: PluginsService,
   ) {}
+
+  /**
+   * Validate the per-app plugin settings of a form in place. Apps without plugin settings keep a form without `plugins`.
+   */
+  private async validatePluginSettings(form: ParsedForm, storedConfig?: Record<string, unknown> | null) {
+    const plugins = await this.plugins.resolveAppPluginConfig(form.plugins, storedConfig?.plugins);
+
+    if (plugins) {
+      form.plugins = plugins;
+    } else {
+      delete form.plugins;
+    }
+  }
 
   private validateDomainSettings(form: ParsedForm) {
     const { exposed, domain } = form;
@@ -123,9 +138,20 @@ export class AppValidationService {
     if (form.openPort && form.port) {
       await this.validatePortUniqueness(form.port);
     }
+
+    await this.validatePluginSettings(form);
   }
 
-  public async validateUpdateConfigSettings(appUrn: AppUrn, appInfo: AppInfo, input: unknown, excludeAppId: number) {
+  /**
+   * @param storedConfig - the config stored for the app, keeps the settings of plugins that are not installed
+   */
+  public async validateUpdateConfigSettings(
+    appUrn: AppUrn,
+    appInfo: AppInfo,
+    input: unknown,
+    excludeAppId: number,
+    storedConfig?: Record<string, unknown> | null,
+  ) {
     const form = appFormSchema(input);
 
     if (form instanceof type.errors) {
@@ -147,6 +173,8 @@ export class AppValidationService {
     if (form.openPort && form.port) {
       await this.validatePortUniqueness(form.port, excludeAppId);
     }
+
+    await this.validatePluginSettings(form, storedConfig);
 
     return form;
   }

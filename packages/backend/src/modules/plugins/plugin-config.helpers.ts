@@ -117,3 +117,43 @@ export const validatePluginConfig = (fields: FormField[], input: PluginConfig): 
 
   return { success: true, config };
 };
+
+type AppField = FormField & { visible_when?: string };
+
+/**
+ * The per-app fields that show for the given values: a field with `visible_when` shows while that boolean field is on
+ * (or defaults to on) and is shown itself.
+ */
+export const getVisibleAppFields = <T extends AppField>(fields: T[], values: Record<string, unknown>): T[] => {
+  const byKey = new Map(fields.map((field) => [field.env_variable, field]));
+
+  const isVisible = (field: AppField, seen: Set<string>): boolean => {
+    if (!field.visible_when) return true;
+    if (seen.has(field.env_variable)) return false;
+
+    const controller = byKey.get(field.visible_when);
+    if (!controller) return false;
+
+    const value = values[controller.env_variable] ?? controller.default;
+    return value === true && isVisible(controller, new Set([...seen, field.env_variable]));
+  };
+
+  return fields.filter((field) => isVisible(field, new Set()));
+};
+
+/**
+ * Validate the per-app settings of one plugin. Values of hidden fields are dropped instead of validated.
+ */
+export const validateAppPluginConfig = (fields: AppField[], input: PluginConfig): ValidationResult => {
+  const declared = new Set(fields.map((field) => field.env_variable));
+  const unknown = Object.keys(input).filter((key) => !declared.has(key));
+
+  if (unknown.length > 0) {
+    return { success: false, reason: `unknown setting ${unknown.join(', ')}` };
+  }
+
+  const visible = getVisibleAppFields(fields, input);
+  const visibleKeys = new Set(visible.map((field) => field.env_variable));
+
+  return validatePluginConfig(visible, Object.fromEntries(Object.entries(input).filter(([key]) => visibleKeys.has(key))));
+};

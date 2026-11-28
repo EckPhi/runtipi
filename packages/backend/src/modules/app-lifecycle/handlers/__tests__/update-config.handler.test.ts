@@ -2,6 +2,7 @@ import { ConfigurationService } from '@/core/config/configuration.service';
 import { LoggerService } from '@/core/logger/logger.service';
 import { AppFilesManager } from '@/modules/apps/app-files-manager';
 import { AppsRepository } from '@/modules/apps/apps.repository';
+import type { PluginsService } from '@/modules/plugins/plugins.service';
 import { AppEventsQueue } from '@/modules/queue/entities/app-events';
 import type { AppUrn } from '@runtipi/common/types';
 import { fromPartial } from '@total-typescript/shoehorn';
@@ -18,7 +19,11 @@ const setup = () => {
   const events = mock<AppEventsQueue>();
   const files = mock<AppFilesManager>();
   const config = mock<ConfigurationService>();
-  const validation = new AppValidationService(repository, config, logger);
+  const plugins = mock<PluginsService>();
+  plugins.resolveAppPluginConfig.mockImplementation(async (input) =>
+    input && Object.keys(input).length > 0 ? (input as Awaited<ReturnType<PluginsService['resolveAppPluginConfig']>>) : undefined,
+  );
+  const validation = new AppValidationService(repository, config, logger, plugins);
   const handler = new UpdateConfigHandler(logger, repository, events, files, validation);
 
   repository.getAppByUrn.mockResolvedValue(fromPartial({ id: 1, config: {} }));
@@ -26,7 +31,7 @@ const setup = () => {
   files.getInstalledAppInfo.mockResolvedValue(fromPartial({ exposable: false, port: 8080 }));
   events.publish.mockResolvedValue({ success: true, message: 'generated' });
 
-  return { handler, repository, events, files };
+  return { handler, repository, events, files, plugins };
 };
 
 test('ordinary settings edits still regenerate files before storing the same normalized settings', async () => {
@@ -74,4 +79,48 @@ test.each([
   await handler.execute(appUrn, { form });
 
   expect(repository.updateAppById).toHaveBeenCalledWith(1, expect.objectContaining({ pendingRestart: expected }));
+});
+
+const tailscaleOn = { 'tailscale:store': { ENABLED: true, HOSTNAME: 'web' } };
+
+test('stores validated plugin settings and passes the stored ones to the validation', async () => {
+  const { handler, repository, plugins } = setup();
+  const stored = { openPort: true, plugins: { 'old:store': { ENABLED: true } } };
+  repository.getAppByUrn.mockResolvedValueOnce(fromPartial({ id: 1, config: stored, pendingRestart: false }));
+
+  await handler.execute(appUrn, { form: { openPort: true, plugins: tailscaleOn } });
+
+  expect(plugins.resolveAppPluginConfig).toHaveBeenCalledWith(tailscaleOn, stored.plugins);
+  expect(repository.updateAppById).toHaveBeenCalledWith(1, expect.objectContaining({ config: expect.objectContaining({ plugins: tailscaleOn }) }));
+});
+
+test.each([
+  { name: 'turning a plugin on', before: undefined, after: tailscaleOn, expected: true },
+  { name: 'turning a plugin off', before: tailscaleOn, after: { 'tailscale:store': { ENABLED: false } }, expected: true },
+  { name: 'saving the same plugin settings', before: tailscaleOn, after: tailscaleOn, expected: false },
+])('marks the app as pending restart when $name', async ({ before, after, expected }) => {
+  const { handler, repository } = setup();
+  const saved = {
+    openPort: true,
+    skipEnv: false,
+    skipPull: false,
+    skipRun: false,
+    exposed: false,
+    exposedLocal: false,
+    enableAuth: false,
+    ...(before ? { plugins: before } : {}),
+  };
+  repository.getAppByUrn.mockResolvedValueOnce(fromPartial({ id: 1, config: saved, pendingRestart: false }));
+
+  await handler.execute(appUrn, { form: { ...saved, plugins: after } });
+
+  expect(repository.updateAppById).toHaveBeenCalledWith(1, expect.objectContaining({ pendingRestart: expected }));
+});
+
+test('apps without plugin settings keep a config without plugins', async () => {
+  const { handler, repository } = setup();
+
+  await handler.execute(appUrn, { form: { openPort: true } });
+
+  expect(repository.updateAppById.mock.calls[0]?.[1].config).not.toHaveProperty('plugins');
 });

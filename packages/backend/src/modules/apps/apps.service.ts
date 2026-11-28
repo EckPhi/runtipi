@@ -4,8 +4,10 @@ import { pLimit } from '@/common/helpers/file-helpers';
 import { ConfigurationService } from '@/core/config/configuration.service';
 import { LoggerService } from '@/core/logger/logger.service';
 import { Injectable } from '@nestjs/common';
+import type { DynamicComposeSchemaYaml } from '@runtipi/common/schemas';
 import type { AppUrn } from '@runtipi/common/types';
 import { MarketplaceService } from '../marketplace/marketplace.service';
+import { PluginsService } from '../plugins/plugins.service';
 import { AppFilesManager } from './app-files-manager';
 import { AppsRepository } from './apps.repository';
 
@@ -19,7 +21,29 @@ export class AppsService {
     private readonly logger: LoggerService,
     private readonly marketplaceService: MarketplaceService,
     private readonly config: ConfigurationService,
+    private readonly plugins: PluginsService,
   ) {}
+
+  /**
+   * The plugin sections to show in the settings of an app. Applicability is checked against the installed Compose file,
+   * or the one in the store for an app that is not installed yet.
+   */
+  private async getPluginSections(appUrn: AppUrn, installed: boolean) {
+    const readCompose = async () => {
+      const fromInstalled = installed ? await this.appFilesManager.getSourceDockerComposeYaml(appUrn).catch(() => null) : null;
+      const source = fromInstalled?.content ? fromInstalled : await this.marketplaceService.getSourceDockerComposeYaml(appUrn).catch(() => null);
+      const content = source?.content as { services?: unknown } | null | undefined;
+
+      return content?.services && typeof content.services === 'object' ? (content as Pick<DynamicComposeSchemaYaml, 'services'>) : null;
+    };
+
+    try {
+      return await this.plugins.getAppPluginSections(await readCompose());
+    } catch (error) {
+      this.logger.error(`Failed to load the plugin settings of app ${appUrn}:`, error);
+      return [];
+    }
+  }
 
   private async populateAppInfo(apps: AppList) {
     const limit = pLimit(10);
@@ -101,7 +125,9 @@ export class AppsService {
       ...updateInfo,
     };
 
-    return { app: app ?? null, info, metadata };
+    const pluginSections = await this.getPluginSections(appUrn, Boolean(app));
+
+    return { app: app ?? null, info, metadata, pluginSections };
   }
 
   public async getRandomPort(tries = 3): Promise<number> {
